@@ -6,9 +6,7 @@ using System.Threading.Tasks;
 
 namespace Neelov.AutocadPlugin
 {
-    public class Programm
-    {
-
-
-    }
+	class ConnectEqvipment
+	{
+	}
 }
