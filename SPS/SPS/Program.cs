@@ -6,9 +6,10 @@ using System.Threading.Tasks;
 
 namespace Neelov.AutocadPlugin
 {
-    public class Programm
+
+    public class Program
     {
-
-
     }
+
+
 }
