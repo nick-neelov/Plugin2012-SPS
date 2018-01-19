@@ -25,8 +25,8 @@ namespace Neelov.AutocadPlugin
 
 			try
 			{
-		//		while (true)
-		//		{
+				while (true)
+				{
 					PromptStringOptions pkoBlockName = new PromptStringOptions("\nУкажите имя блока: ");
 					pkoBlockName.DefaultValue = blockName;
 					PromptResult prBlockName = ed.GetString(pkoBlockName);
@@ -121,7 +121,7 @@ namespace Neelov.AutocadPlugin
 						ed.WriteMessage("\nТакого блока нет в чертеже! Добавте его в черетеж с панели элементов.");
 						//return;	
 					}
-			//	}
+				}
 			}
 
 			catch (Autodesk.AutoCAD.Runtime.Exception ex)
@@ -133,47 +133,32 @@ namespace Neelov.AutocadPlugin
 		/// <summary>
 		/// Метод корректировки имени блока при вводе
 		/// </summary>
-		/// <param name="pr"></param>
-		/// <returns></returns>
+		/// <param name="pr">Имя блока в русской или латинской раскладке</param>
+		/// <returns>Коректное имя блока в латинской раскладке</returns>
 		static string CorrectBlockName(PromptResult pr)
 		{
+
 			string result = "";
-			string curBlockName = pr.StringResult.ToUpper();
+			char[] rusLetters = new char[] { 'Й', 'Ц', 'У', 'К', 'Е', 'Н', 'Г', 'Ш', 'Щ', 'З', 'Ф', 'Ы', 'В', 'А', 'П', 'Р', 'О', 'Л', 'Д', 'Я', 'Ч', 'С', 'М', 'И', 'Т', 'Ь' };
+			char[] engLettres = new char[] { 'Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P', 'A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L', 'Z', 'X', 'C', 'V', 'B', 'N', 'M' };
 
-			if (curBlockName == "VT" || curBlockName == "МЕ")
-				result = "VT";
 
-			else if (curBlockName == "RP" || curBlockName == "КЗ")
-				result = "RP";
+				foreach (char ch in pr.StringResult.ToUpper())
+				{
+					for (int i = 0; i < rusLetters.Count(); i++)
+					{
+						if (ch == rusLetters[i])
+						{
+							result = result + ch;
+						}
+					else
+					{
+						result = pr.StringResult.ToUpper();
+					}
+					}
+				}
+		
 
-			else if (curBlockName == "CM" || curBlockName == "СЬ")
-				result = "CM";
-
-			else if (curBlockName == "LA" || curBlockName == "ДФ")
-				result = "LA";
-
-			else if (curBlockName == "BR" || curBlockName == "ИК")
-				result = "BR";
-
-			else if (curBlockName == "SR" || curBlockName == "ЫК")
-				result = "SR";
-
-			else if (curBlockName == "SS" || curBlockName == "ЫЫ")
-				result = "SS";
-
-			else if (curBlockName == "PS" || curBlockName == "ЗЫ")
-				result = "PS";
-
-			else if (curBlockName == "RN" || curBlockName == "КТ")
-				result = "RN";
-
-			else if (curBlockName == "TO" || curBlockName == "ЕЩ")
-				result = "TO";
-
-			else
-			{
-				//	result = "";
-			}
 			return result;
 		}
 
