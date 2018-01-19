@@ -14,19 +14,9 @@ namespace Neelov.AutocadPlugin
 {
 
     public class Program
-    {
-		[CommandMethod("NK-SPS-INSERT-EQVIPMENT")]
-		public void WorkWithPlan()
-		{
-			while(true)
-			{
-				InsertEqvipment.AddEqvipmentOnPlan();
-			}
-			
-		}
-
-		[CommandMethod("SPS-Plugin")]
-		public void CKCPlugin()
+    {		
+		[CommandMethod("NK-SPS-PLUGIN")]
+		public void SPSPlugin()
 		{
 			Document doc = Application.DocumentManager.MdiActiveDocument;
 			if (doc == null)
