@@ -1,8 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 using Autodesk.AutoCAD.ApplicationServices;
 using Autodesk.AutoCAD.DatabaseServices;
@@ -10,142 +6,74 @@ using Autodesk.AutoCAD.EditorInput;
 using Autodesk.AutoCAD.Geometry;
 using Autodesk.AutoCAD.Runtime;
 
+//[assembly : CommandClass(typeof(EscapeLoop.Program))]
+
 namespace Neelov.AutocadPlugin
 {
 
+	/// <summary>
+	/// Реализующий запуск программ (плагинов) для проектирования палатной сигнализации
+	/// </summary>
     public class Program
-    {		
-		[CommandMethod("NK-SPS-PLUGIN")]
-		public void SPSPlugin()
+    {	
+		/// <summary>
+		/// Комманда для вставки оборудования на планы
+		/// </summary>
+		[CommandMethod("NK-SPS-INSERTEQVIPMENT")]
+		public void InsertEqvipment()
 		{
-			Document doc = Application.DocumentManager.MdiActiveDocument;
-			if (doc == null)
-				return;
 
-			Editor ed = doc.Editor;
-			Database db = doc.Database;
+		}	
 
-			try
-			{
-				string flagExit = "";
-
-				while (flagExit != "Выход")
-				{
-					// Главное меню после запуска программы
-					PromptKeywordOptions pkoMainMenu = new PromptKeywordOptions("\nВыберите режим работы: ");
-					pkoMainMenu.Keywords.Add("Планы");
-					pkoMainMenu.Keywords.Add("Схемы");
-					pkoMainMenu.Keywords.Add("Выход");
-					pkoMainMenu.Keywords.Default = "Планы";
-
-					PromptResult prMainMenu = ed.GetKeywords(pkoMainMenu);
-					if (prMainMenu.Status != PromptStatus.OK)
-						return;
-
-					switch (prMainMenu.StringResult)
-					{
-						// Подменю работы с планами
-						case "Планы":
-
-							PromptKeywordOptions pkoPlanMenu = new PromptKeywordOptions("\nВыберите режим работы с планами (оборудованием) : ");
-							pkoPlanMenu.Keywords.Add("Размещение");
-							pkoPlanMenu.Keywords.Add("Подключение");
-							pkoPlanMenu.Keywords.Add("Главное меню");
-							pkoPlanMenu.Keywords.Default = "Размещение";
-
-							PromptResult prPlanMenu = ed.GetKeywords(pkoPlanMenu);
-							if (prPlanMenu.Status != PromptStatus.OK)
-								return;
-
-							switch (prPlanMenu.StringResult)
-							{
-								// Размещение оборудования СКС на планах
-								case "Размещение":
-									InsertEqvipment.AddEqvipmentOnPlan();
-									break;
-
-								// Отрисовка кабелей от шкафа до розеток
-								case "Подключение":
-									ed.WriteMessage("\nФункции пока нет");
-									break;
-
-								// Возврат в меню
-								case "Главное":
-									break;
-
-								default:
-									ed.WriteMessage("Ничего не выбрано...");
-									break;
-							}
-							break;
-
-						// Подменю работы со схемами
-						case "Схемы":
-							PromptKeywordOptions pkoSchemeMenu = new PromptKeywordOptions("\nВыберите вид схемы: ");
-							pkoSchemeMenu.Keywords.Add("Структурная");
-							//pkoSchemeMenu.Keywords.Add("Размещения");
-							//pkoSchemeMenu.Keywords.Add("Коммутационная");
-							pkoSchemeMenu.Keywords.Add("Главное меню");
-							pkoSchemeMenu.Keywords.Default = "Структурная";
-
-							PromptResult prSchemeMenu = ed.GetKeywords(pkoSchemeMenu);
-							if (prSchemeMenu.Status != PromptStatus.OK)
-								return;
-
-							switch (prSchemeMenu.StringResult)
-							{
-								case "Структурная":
-									// метод отросовки структурных схем
-									break;
-
-								case "Главное меню":
-									// Возврат в меню
-									break;
-
-								default:
-									// Выход из 
-									ed.WriteMessage("Не выбран выд схемы...");
-									break;
-							}
-							break;
-
-						// Выходим из плагина
-						case "Выход":
-							flagExit = "Выход";
-							break;
-
-						// Выходим из плагина, если что-то пошло не так
-						default:
-							ed.WriteMessage("\nНе выбран режим...");
-							break;
-
-					}
-
-
-
-				}
-
-
-			}
-
-			catch (Autodesk.AutoCAD.Runtime.Exception ex)
-			{
-				ed.WriteMessage("\nИсключение " + ex.Message + "\nВ строке " + ex.StackTrace);
-			}
-
-
-
-
-
+		/// <summary>
+		/// Комманда для подключения оборудования 
+		/// </summary>
+		[CommandMethod("NK-SPS-CONNECTEQVEPMENT")]
+		public void ConnectEqvipment()
+		{
 
 		}
 
+		/// <summary>
+		/// Метод для отрисовки структурной схемы схемы
+		/// </summary>
+		[CommandMethod("NK-SPS-DRAWSTRUCTURALSCHEME")]
+		public void DrawStructuralScheme()
+		{
 
+		}		
+	}
+	
 
+	/// <summary>
+	/// Класс реализующий фильтрацию сообщений
+	/// </summary>
+	public class MyMessageFilter : System.Windows.Forms.IMessageFilter
+	{
+		public const int WM_KEYDOWN = 0x0100;
+		public const int WM_KEYUP = 0x0101;
 
+		public bool bCancaled = false;
+
+		public bool PreFilterMessage(ref System.Windows.Forms.Message m)
+		{
+			if (m.Msg == WM_KEYDOWN || m.Msg == WM_KEYUP)
+			{
+				// Проверяем нажание ESC
+				System.Windows.Forms.Keys kc = (System.Windows.Forms.Keys)(int)m.WParam & System.Windows.Forms.Keys.KeyCode;
+
+				if (kc == System.Windows.Forms.Keys.Escape)
+				{
+					bCancaled = true;
+					return true;
+				}							
+			}
+			return false;
+		}
 
 
 	}
+
 
 
 }
