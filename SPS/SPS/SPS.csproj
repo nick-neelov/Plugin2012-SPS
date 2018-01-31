@@ -38,10 +38,6 @@
       <HintPath>..\..\..\..\..\Работа\.nk\CC.NET\ObjectARX\ObjectARX 2012\inc\AcMgd.dll</HintPath>
       <Private>False</Private>
     </Reference>
-    <Reference Include="ProjectMainLib">
-      <HintPath>..\..\..\..\..\Работа\.nk\CC.NET\Lib\Dll\ProjectMainLib.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Windows.Forms" />

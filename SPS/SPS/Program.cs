@@ -6,7 +6,7 @@ using Autodesk.AutoCAD.EditorInput;
 using Autodesk.AutoCAD.Geometry;
 using Autodesk.AutoCAD.Runtime;
 
-//[assembly : CommandClass(typeof(EscapeLoop.Program))]
+[assembly : CommandClass(typeof(Neelov.AutocadPlugin.Program))]
 
 namespace Neelov.AutocadPlugin
 {
