@@ -101,7 +101,6 @@ namespace Neelov.AutocadPlugin
 		}
 
 
-
 		/// <summary>
 		/// Добавление имени сектора в блок
 		/// </summary>
