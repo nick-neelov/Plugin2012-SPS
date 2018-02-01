@@ -33,96 +33,143 @@ namespace Neelov.AutocadPlugin
 
 			Point3d insPoint = new Point3d();
 
-			try
+
+	while (true)
 			{
-				PromptStringOptions pso = new PromptStringOptions("\nУкажите имя блока: ");
-				pso.DefaultValue = blockName;
-				
-
-				PromptResult pr = ed.GetString(pso);
-				if (pr.Status != PromptStatus.OK) return;
-				blockName = CorrectBlockName(pr.StringResult);
-
-				// Получаем точку вставки блока
-				PromptPointResult ppr = ed.GetPoint("\nУкажите точку вставки блока: ");
-				if (ppr.Status != PromptStatus.OK) return;
-
-				insPoint = ppr.Value;
-
-				// Указываем направление смещения 
-				PromptStringOptions psoMove = new PromptStringOptions("\nУкажите направление смещения блока: ");
-				PromptResult prMove = ed.GetString(psoMove);
-				if (prMove.Status != PromptStatus.OK) return;
-
-				switch (prMove.StringResult)
+				using (Transaction tr = db.TransactionManager.StartTransaction())
 				{
-					case "2":
-						insPoint = new Point3d(insPoint.X, insPoint.Y - 300, insPoint.Z);
-						break;
-
-					case "4":
-						insPoint = new Point3d(insPoint.X - 300, insPoint.Y, insPoint.Z);
-						break;
-
-					case "8":
-						insPoint = new Point3d(insPoint.X, insPoint.Y + 300, insPoint.Z);
-						break;
-
-					case "6":
-						insPoint = new Point3d(insPoint.X + 300, insPoint.Y, insPoint.Z);
-						break;
-
-					default:
-						ed.WriteMessage("\nТочка без изменений");
-						break;
-				}
-			}
-			catch (Autodesk.AutoCAD.Runtime.Exception ex)
-			{
-				ed.WriteMessage("\nИсключение : " + ex.Message + "\nВ строке " + ex.StackTrace);
-			}
-
-			using (Transaction tr = db.TransactionManager.StartTransaction())
-			{
-
-				try
-				{
-					BlockTable bt = tr.GetObject(db.BlockTableId, OpenMode.ForWrite) as BlockTable;
-					// Проверяем наличие блока 
-					if (bt.Has(blockName))
+					try
 					{
-						Common.Block.InsertNoRotation(blockName, insPoint);
-						
+						PromptStringOptions pso = new PromptStringOptions("\nУкажите имя блока (0 - выход): ");
+						pso.DefaultValue = blockName;
+						PromptResult pr = ed.GetString(pso);
+						if (pr.Status != PromptStatus.OK) return;
+						blockName = CorrectBlockName(pr.StringResult);
 
+						//Выходим если имя 0
+						if (blockName == "0")
+						{
+							break;
+						}
+
+						BlockTable bt = tr.GetObject(db.BlockTableId, OpenMode.ForWrite) as BlockTable;
+						// Проверяем наличие блока 
+						if (!bt.Has(blockName))
+						{
+							ed.WriteMessage("\nТакого блока нет в черетеже! Вставте его с палитры!");
+							return;
+						}
+
+						// Получаем точку вставки блока
+						PromptPointResult ppr = ed.GetPoint("\nУкажите точку вставки блока: ");
+						if (ppr.Status != PromptStatus.OK) return;
+
+						insPoint = ppr.Value;
+
+						// Указываем направление смещения 
+						PromptStringOptions psoMove = new PromptStringOptions("\nУкажите направление смещения блока: ");
+						PromptResult prMove = ed.GetString(psoMove);
+						if (prMove.Status != PromptStatus.OK) return;
+
+						switch (prMove.StringResult)
+						{
+							case "2":
+								insPoint = new Point3d(insPoint.X, insPoint.Y - 300, insPoint.Z);
+								break;
+
+							case "4":
+								insPoint = new Point3d(insPoint.X - 300, insPoint.Y, insPoint.Z);
+								break;
+
+							case "8":
+								insPoint = new Point3d(insPoint.X, insPoint.Y + 300, insPoint.Z);
+								break;
+
+							case "6":
+								insPoint = new Point3d(insPoint.X + 300, insPoint.Y, insPoint.Z);
+								break;
+
+							default:
+								ed.WriteMessage("\nТочка без изменений");
+								break;
+						}
+
+						// Вставляем блок
+						Common.Block.InsertNoRotation(blockName, insPoint);
 						// Получаем последний вставленный блок
 						PromptSelectionResult psrLast = ed.SelectLast();
 						SelectionSet ss = psrLast.Value;
+						//Записываем номер сектора в атрибуты
+						foreach (SelectedObject so in ss)
+						{
+							BlockReference br = tr.GetObject(so.ObjectId, OpenMode.ForWrite) as BlockReference;
+							Common.Sectors.AddSectorInBlock(br);						
+						}
 
+						switch (prMove.StringResult)
+						{
+							case "2":
+								insPoint = new Point3d(insPoint.X, insPoint.Y - 750, insPoint.Z);
+								break;
+
+							case "4":
+								insPoint = new Point3d(insPoint.X - 750, insPoint.Y, insPoint.Z);
+								break;
+
+							case "8":
+								insPoint = new Point3d(insPoint.X, insPoint.Y + 750, insPoint.Z);
+								break;
+
+							case "6":
+								insPoint = new Point3d(insPoint.X + 750, insPoint.Y, insPoint.Z);
+								break;
+							default:								
+								break;
+						}
+
+						// Автоматически вставляем пульт пациента
+						if (blockName == "ZU")
+						{
+							Common.Block.InsertNoRotation("RP", insPoint);
+						}
+						else if (blockName == "ZE")
+						{
+							Common.Block.InsertNoRotation("TP", insPoint);
+						}
+
+						else if (blockName == "ZVJ")
+						{
+							Common.Block.InsertNoRotation("VJ", insPoint);
+						}
+						else if (blockName == "ZRJ")
+						{
+							Common.Block.InsertNoRotation("RJP", insPoint);
+						}
+
+						// Получаем последний вставленный блок
+						psrLast = ed.SelectLast();
+						ss = psrLast.Value;
+						//Записываем номер сектора в атрибуты
 						foreach (SelectedObject so in ss)
 						{
 							BlockReference br = tr.GetObject(so.ObjectId, OpenMode.ForWrite) as BlockReference;
 							Common.Sectors.AddSectorInBlock(br);
 						}
 
-						tr.Commit();
+						tr.Commit();						
 					}
-					else
+
+					catch (Autodesk.AutoCAD.Runtime.Exception ex)
 					{
-						ed.WriteMessage("\nТакого блока нет в черетеже! Вставте его с палитры!");
-						return;
+						ed.WriteMessage("\nИсключение : " + ex.Message + "\nВ строке " + ex.StackTrace);
 					}
-
-				}
-
-				catch (Autodesk.AutoCAD.Runtime.Exception ex)
-				{
-					ed.WriteMessage("\nИсключение : " + ex.Message + "\nВ строке " + ex.StackTrace);
-				}
-				finally
-				{
-					tr.Dispose();
+					finally
+					{
+						tr.Dispose();
+					}
 				}
 			}
+
 
 		}
 
@@ -136,26 +183,28 @@ namespace Neelov.AutocadPlugin
 		{
 			string result = "";
 
-			char[] engLetters = new char[] { 'Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P', 'A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L', 'Z', 'X', 'C', 'V', 'B', 'N', 'M' };
-			char[] rusLetters = new char[] { 'Й', 'Ц', 'У', 'К', 'Е', 'Н', 'Г', 'Ш', 'Щ', 'З', 'Ф', 'Ы', 'В', 'А', 'П', 'Р', 'О', 'Л', 'Д', 'Я', 'Ч', 'С', 'М', 'И', 'Т', 'Ь' };
+			string[] engLetters = new string[] { "Q", "W", "E", "R", "T", "Y", "U", "I", "O", "P", "A", "S", "D", "F", "G", "H", "J", "K", "L", "Z", "X", "C", "V", "B", "N", "M" };
+			string[] rusLetters = new string[] { "Й", "Ц", "У", "К", "Е", "Н", "Г", "Ш", "Щ", "З", "Ф", "Ы", "В", "А", "П", "Р", "О", "Л", "Д", "Я", "Ч", "С", "М", "И", "Т", "Ь" };
 
 			foreach (char ch in bn)
 			{
-				//Проверям на какой раскладке написано имя блок
-				if ((int)ch >= 97 && (int)ch <= 122)
+				// Если русскими буквами			
+
+				if (Convert.ToInt32(ch) >= 97 && Convert.ToInt32(ch) <= 122)
 				{
-					// Если русскими буквами
-					for (int i = 0; i < rusLetters.Count(); i++)
+					foreach (string el in rusLetters)
 					{
-						if (ch == rusLetters[i])
+						string tmp = char.ToString(ch);
+						if (string.Compare(tmp, el, true) == 0)
 						{
-							result = result + engLetters[i];
+							result += engLetters.ElementAt(Array.IndexOf(rusLetters, el));
 						}
 					}
 				}
 				else
 				{
 					result = bn;
+					break;
 				}
 			}
 			return result;

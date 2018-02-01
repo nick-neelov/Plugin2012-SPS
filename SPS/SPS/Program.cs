@@ -22,33 +22,8 @@ namespace Neelov.AutocadPlugin
 		[CommandMethod("NK-SPS-INSERTEQVIPMENT")]
 		public void InsertEqvipment()
 		{
-			Document doc = Application.DocumentManager.MdiActiveDocument;
-			if (doc == null) return;
-			Editor ed = doc.Editor;
-
-			//Создаем и добавляем фильтрацию сообщений
-			MyMessageFilter filter = new MyMessageFilter();
-			System.Windows.Forms.Application.AddMessageFilter(filter);
-
-			while (true)
-			{
-				// Проверяем не было ли пользовательского ввода
-				System.Windows.Forms.Application.DoEvents();
-
-				// Проверяем не установил ли наш фильтр флаг Esc
-				if (filter.bCancaled == true)
-				{
-					ed.WriteMessage("\nВыход из плагина");
-					break;
-				}
-
-				// TODO Сюда вставляем метод для вставки оборудования
-				WorkWithPlans.InsertEqvipment();
-			}
-
-			// Удаляем фильтр
-			System.Windows.Forms.Application.RemoveMessageFilter(filter);
-		}	
+			WorkWithPlans.InsertEqvipment();	
+		}
 
 		/// <summary>
 		/// Комманда для подключения оборудования 
