@@ -28,10 +28,10 @@ namespace Neelov.AutocadPlugin
 		/// <summary>
 		/// Комманда для подключения оборудования 
 		/// </summary>
-		[CommandMethod("NK-SPS-CONNECTEQVEPMENT")]
-		public void ConnectEqvipment()
+		[CommandMethod("NK-SPS-CONNECTSPS")]
+		public void SPSConnect()
 		{
-
+			ConnectEqvipment.ConnectSPS();
 		}
 
 		/// <summary>

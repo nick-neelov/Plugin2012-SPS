@@ -1,15 +1,9 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Autodesk.AutoCAD.ApplicationServices;
 using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.EditorInput;
 using Autodesk.AutoCAD.Geometry;
-using Autodesk.AutoCAD.Runtime;
-using Autodesk.AutoCAD.Internal;
-
 
 namespace Neelov.AutocadPlugin
 {
@@ -96,6 +90,7 @@ namespace Neelov.AutocadPlugin
 
 						// Вставляем блок
 						Common.Block.InsertNoRotation(blockName, insPoint);
+
 						// Получаем последний вставленный блок
 						PromptSelectionResult psrLast = ed.SelectLast();
 						SelectionSet ss = psrLast.Value;
@@ -174,6 +169,7 @@ namespace Neelov.AutocadPlugin
 		}
 
 
+		// TODO Доделать метод для корректного ввода имен блоков
 		/// <summary>
 		/// Метод для корректировки вводимого имени блока
 		/// </summary>
