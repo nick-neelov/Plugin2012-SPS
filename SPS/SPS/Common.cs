@@ -20,7 +20,7 @@ namespace Neelov.AutocadPlugin
 		/// </summary>
 		internal class Block
 		{
-			internal static void InsertNoRotation(string blockName, Point3d insPoint, double scaleX = 100, double scaleY = 100, double scaleZ = 100)
+			internal static void InsertWithRotation(string blockName, Point3d insPoint, double rotation = 0, double scaleX = 100, double scaleY = 100, double scaleZ = 100)
 			{
 
 				Editor ed = Application.DocumentManager.MdiActiveDocument.Editor;
@@ -49,6 +49,7 @@ namespace Neelov.AutocadPlugin
 						Matrix3d ucs = ed.CurrentUserCoordinateSystem;
 						gleader.TransformBy(ucs);
 						gleader.ScaleFactors = new Scale3d(scaleX, scaleY, scaleZ);
+						gleader.Rotation = rotation;
 
 						btr.AppendEntity(gleader);
 						tr.AddNewlyCreatedDBObject(gleader, true);
@@ -96,10 +97,7 @@ namespace Neelov.AutocadPlugin
 					}
 				} //end using       			
 			}
-
-
 		}
-
 
 		/// <summary>
 		/// Добавление имени сектора в блок
@@ -221,7 +219,7 @@ namespace Neelov.AutocadPlugin
 					}
 				}
 				// Добавляем в блок номер сектора
-				Attributes.SetAttribute(br, "01", sector);
+				Attributes.SetAttribute(br, "1", sector);
 			}
 
 		}
@@ -291,6 +289,23 @@ namespace Neelov.AutocadPlugin
 
 
 		}
+	}
+
+
+	internal static class Methods
+	{
+
+		static public double ConvertDegToRad(double deg)
+		{
+			return deg * Math.PI / 180;
+		}
+
+		static public double ConvertRadToDeg(double rad)
+		{
+			return rad * 180 / Math.PI;
+		}
 
 	}
+
+
 }

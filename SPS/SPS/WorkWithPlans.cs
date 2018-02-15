@@ -26,6 +26,8 @@ namespace Neelov.AutocadPlugin
 			Database db = doc.Database;
 
 			Point3d insPoint = new Point3d();
+			double rotation = 0;
+
 
 
 	while (true)
@@ -67,21 +69,46 @@ namespace Neelov.AutocadPlugin
 
 						switch (prMove.StringResult)
 						{
+
+							//case "1":
+							//	insPoint = new Point3d(insPoint.X - 300, insPoint.Y, insPoint.Z);
+							//	rotation = Methods.ConvertDegToRad(45);
+							//	break;
+
 							case "2":
 								insPoint = new Point3d(insPoint.X, insPoint.Y - 300, insPoint.Z);
+								rotation = Methods.ConvertDegToRad(0);
 								break;
+
+							//case "3":
+							//	insPoint = new Point3d(insPoint.X + 300, insPoint.Y, insPoint.Z);
+							//	rotation = Methods.ConvertDegToRad(-45);
+							//	break;
 
 							case "4":
 								insPoint = new Point3d(insPoint.X - 300, insPoint.Y, insPoint.Z);
-								break;
-
-							case "8":
-								insPoint = new Point3d(insPoint.X, insPoint.Y + 300, insPoint.Z);
+								rotation = Methods.ConvertDegToRad(0);
 								break;
 
 							case "6":
 								insPoint = new Point3d(insPoint.X + 300, insPoint.Y, insPoint.Z);
+								rotation = Methods.ConvertDegToRad(0);
 								break;
+
+							//case "7":
+							//	insPoint = new Point3d(insPoint.X - 300, insPoint.Y, insPoint.Z);
+							//	rotation = Methods.ConvertDegToRad(45);
+							//	break;
+
+							case "8":
+								insPoint = new Point3d(insPoint.X, insPoint.Y + 300, insPoint.Z);
+								rotation = Methods.ConvertDegToRad(0);
+								break;
+
+							//case "9":
+							//	insPoint = new Point3d(insPoint.X + 300, insPoint.Y, insPoint.Z);
+							//	rotation = Methods.ConvertDegToRad(-45);
+							//	break;
 
 							default:
 								ed.WriteMessage("\nТочка без изменений");
@@ -89,7 +116,7 @@ namespace Neelov.AutocadPlugin
 						}
 
 						// Вставляем блок
-						Common.Block.InsertNoRotation(blockName, insPoint);
+						Common.Block.InsertWithRotation(blockName, insPoint, rotation);
 
 						// Получаем последний вставленный блок
 						PromptSelectionResult psrLast = ed.SelectLast();
@@ -98,25 +125,30 @@ namespace Neelov.AutocadPlugin
 						foreach (SelectedObject so in ss)
 						{
 							BlockReference br = tr.GetObject(so.ObjectId, OpenMode.ForWrite) as BlockReference;
-							Common.Sectors.AddSectorInBlock(br);						
+							Common.Sectors.AddSectorInBlock(br);
+							Common.Attributes.SetAttribute(br, "2", prMove.StringResult);													
 						}
 
 						switch (prMove.StringResult)
 						{
 							case "2":
 								insPoint = new Point3d(insPoint.X, insPoint.Y - 750, insPoint.Z);
+								rotation = Methods.ConvertDegToRad(0);
 								break;
 
 							case "4":
 								insPoint = new Point3d(insPoint.X - 750, insPoint.Y, insPoint.Z);
+								rotation = Methods.ConvertDegToRad(0);
 								break;
 
 							case "8":
 								insPoint = new Point3d(insPoint.X, insPoint.Y + 750, insPoint.Z);
+								rotation = Methods.ConvertDegToRad(0);
 								break;
 
 							case "6":
 								insPoint = new Point3d(insPoint.X + 750, insPoint.Y, insPoint.Z);
+								rotation = Methods.ConvertDegToRad(0);
 								break;
 							default:								
 								break;
@@ -125,20 +157,20 @@ namespace Neelov.AutocadPlugin
 						// Автоматически вставляем пульт пациента
 						if (blockName == "ZU")
 						{
-							Common.Block.InsertNoRotation("RP", insPoint);
+							Common.Block.InsertWithRotation("LJ", insPoint);
 						}
 						else if (blockName == "ZE")
 						{
-							Common.Block.InsertNoRotation("TP", insPoint);
+							Common.Block.InsertWithRotation("TP", insPoint);
 						}
 
 						else if (blockName == "ZVJ")
 						{
-							Common.Block.InsertNoRotation("VJ", insPoint);
+							Common.Block.InsertWithRotation("VJ", insPoint);
 						}
 						else if (blockName == "ZRJ")
 						{
-							Common.Block.InsertNoRotation("RJP", insPoint);
+							Common.Block.InsertWithRotation("RJP", insPoint);
 						}
 
 						// Получаем последний вставленный блок
@@ -149,6 +181,7 @@ namespace Neelov.AutocadPlugin
 						{
 							BlockReference br = tr.GetObject(so.ObjectId, OpenMode.ForWrite) as BlockReference;
 							Common.Sectors.AddSectorInBlock(br);
+							Common.Attributes.SetAttribute(br, "2", prMove.StringResult);
 						}
 
 						tr.Commit();						
@@ -208,7 +241,7 @@ namespace Neelov.AutocadPlugin
 
 
 
-		// TODO Добавить класс для обработки нажатия клавиш 4, 8, 6, 2 для смещения блока
+	
 
 
 	}
