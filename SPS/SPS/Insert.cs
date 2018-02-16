@@ -10,7 +10,7 @@ namespace Neelov.AutocadPlugin
 	/// <summary>
 	/// Класс реализующий работу с планами
 	/// </summary>
-	class WorkWithPlans
+	class Insert
 	{
 		private static string blockName;
 
@@ -49,10 +49,11 @@ namespace Neelov.AutocadPlugin
 						}
 
 						BlockTable bt = tr.GetObject(db.BlockTableId, OpenMode.ForWrite) as BlockTable;
+
 						// Проверяем наличие блока 
 						if (!bt.Has(blockName))
 						{
-							ed.WriteMessage("\nТакого блока нет в черетеже! Вставте его с палитры!");
+							ed.WriteMessage("\nБлока " + blockName + " нет в черетеже!Вставте его с палитры!");
 							return;
 						}
 
@@ -70,20 +71,20 @@ namespace Neelov.AutocadPlugin
 						switch (prMove.StringResult)
 						{
 
-							//case "1":
-							//	insPoint = new Point3d(insPoint.X - 300, insPoint.Y, insPoint.Z);
-							//	rotation = Methods.ConvertDegToRad(45);
-							//	break;
+							case "1":
+								insPoint = new Point3d(insPoint.X - 212.13205, insPoint.Y - 212.13205, insPoint.Z);
+								rotation = Methods.ConvertDegToRad(45);
+								break;
 
 							case "2":
 								insPoint = new Point3d(insPoint.X, insPoint.Y - 300, insPoint.Z);
 								rotation = Methods.ConvertDegToRad(0);
 								break;
 
-							//case "3":
-							//	insPoint = new Point3d(insPoint.X + 300, insPoint.Y, insPoint.Z);
-							//	rotation = Methods.ConvertDegToRad(-45);
-							//	break;
+							case "3":
+								insPoint = new Point3d(insPoint.X + 212.13205, insPoint.Y - 212.13205, insPoint.Z);
+								rotation = Methods.ConvertDegToRad(-45);
+								break;
 
 							case "4":
 								insPoint = new Point3d(insPoint.X - 300, insPoint.Y, insPoint.Z);
@@ -95,20 +96,20 @@ namespace Neelov.AutocadPlugin
 								rotation = Methods.ConvertDegToRad(0);
 								break;
 
-							//case "7":
-							//	insPoint = new Point3d(insPoint.X - 300, insPoint.Y, insPoint.Z);
-							//	rotation = Methods.ConvertDegToRad(45);
-							//	break;
+							case "7":
+								insPoint = new Point3d(insPoint.X - 212.13205, insPoint.Y + 212.13205, insPoint.Z);
+								rotation = Methods.ConvertDegToRad(45);
+								break;
 
 							case "8":
 								insPoint = new Point3d(insPoint.X, insPoint.Y + 300, insPoint.Z);
 								rotation = Methods.ConvertDegToRad(0);
 								break;
 
-							//case "9":
-							//	insPoint = new Point3d(insPoint.X + 300, insPoint.Y, insPoint.Z);
-							//	rotation = Methods.ConvertDegToRad(-45);
-							//	break;
+							case "9":
+								insPoint = new Point3d(insPoint.X + 212.13205, insPoint.Y + 212.13205, insPoint.Z);
+								rotation = Methods.ConvertDegToRad(-45);
+								break;
 
 							default:
 								ed.WriteMessage("\nТочка без изменений");
@@ -131,25 +132,38 @@ namespace Neelov.AutocadPlugin
 
 						switch (prMove.StringResult)
 						{
+							case "1":
+								insPoint = new Point3d(insPoint.X - 512.13205, insPoint.Y - 512.13205, insPoint.Z);								
+								break;
+
 							case "2":
-								insPoint = new Point3d(insPoint.X, insPoint.Y - 750, insPoint.Z);
-								rotation = Methods.ConvertDegToRad(0);
+								insPoint = new Point3d(insPoint.X, insPoint.Y - 750, insPoint.Z);								
+								break;
+								
+							case "3":
+								insPoint = new Point3d(insPoint.X + 512.13205, insPoint.Y - 512.13205, insPoint.Z);								
 								break;
 
 							case "4":
-								insPoint = new Point3d(insPoint.X - 750, insPoint.Y, insPoint.Z);
-								rotation = Methods.ConvertDegToRad(0);
+								insPoint = new Point3d(insPoint.X - 750, insPoint.Y, insPoint.Z);								
+								break;
+								
+							case "6":
+								insPoint = new Point3d(insPoint.X + 750, insPoint.Y, insPoint.Z);
+								break;
+
+							case "7":
+								insPoint = new Point3d(insPoint.X - 512.13205, insPoint.Y + 512.13205, insPoint.Z);
 								break;
 
 							case "8":
-								insPoint = new Point3d(insPoint.X, insPoint.Y + 750, insPoint.Z);
-								rotation = Methods.ConvertDegToRad(0);
+								insPoint = new Point3d(insPoint.X, insPoint.Y + 750, insPoint.Z);								
 								break;
 
-							case "6":
-								insPoint = new Point3d(insPoint.X + 750, insPoint.Y, insPoint.Z);
-								rotation = Methods.ConvertDegToRad(0);
+							case "9":
+								insPoint = new Point3d(insPoint.X + 512.13205, insPoint.Y + 512.13205, insPoint.Z);								
 								break;
+
 							default:								
 								break;
 						}
@@ -157,20 +171,20 @@ namespace Neelov.AutocadPlugin
 						// Автоматически вставляем пульт пациента
 						if (blockName == "ZU")
 						{
-							Common.Block.InsertWithRotation("LJ", insPoint);
+							Common.Block.InsertWithRotation("LJ", insPoint, rotation);
 						}
 						else if (blockName == "ZE")
 						{
-							Common.Block.InsertWithRotation("TP", insPoint);
+							Common.Block.InsertWithRotation("TP", insPoint, rotation);
 						}
 
 						else if (blockName == "ZVJ")
 						{
-							Common.Block.InsertWithRotation("VJ", insPoint);
+							Common.Block.InsertWithRotation("VJ", insPoint, rotation);
 						}
 						else if (blockName == "ZRJ")
 						{
-							Common.Block.InsertWithRotation("RJP", insPoint);
+							Common.Block.InsertWithRotation("RJP", insPoint, rotation);
 						}
 
 						// Получаем последний вставленный блок
@@ -202,46 +216,88 @@ namespace Neelov.AutocadPlugin
 		}
 
 
-		// TODO Доделать метод для корректного ввода имен блоков
-		/// <summary>
-		/// Метод для корректировки вводимого имени блока
-		/// </summary>
-		/// <param name="bn">Имя блока от пользователя</param>
-		/// <returns></returns>
-		private static string CorrectBlockName(string bn)
+		//// TODO Доделать метод для корректного ввода имен блоков
+		///// <summary>
+		///// Метод для корректировки вводимого имени блока
+		///// </summary>
+		///// <param name="bn">Имя блока от пользователя</param>
+		///// <returns></returns>
+		//private static string CorrectBlockName(string bn)
+		//{
+		//	string result = "";
+
+		//	string[] engLetters = new string[] { "Q", "W", "E", "R", "T", "Y", "U", "I", "O", "P", "A", "S", "D", "F", "G", "H", "J", "K", "L", "Z", "X", "C", "V", "B", "N", "M" };
+		//	string[] rusLetters = new string[] { "Й", "Ц", "У", "К", "Е", "Н", "Г", "Ш", "Щ", "З", "Ф", "Ы", "В", "А", "П", "Р", "О", "Л", "Д", "Я", "Ч", "С", "М", "И", "Т", "Ь" };
+
+		//	foreach (char ch in bn.ToUpper())
+		//	{
+		//		// Если русскими буквами			
+		//		int a = Convert.ToInt32(ch);
+
+		//		if (Convert.ToInt32(ch) >= 97 && Convert.ToInt32(ch) <= 122)
+		//		{
+		//			foreach (string el in rusLetters)
+		//			{
+		//				string tmp = char.ToString(ch);
+		//				if (string.Compare(tmp, el, true) == 0)
+		//				{
+		//					result += engLetters.ElementAt(Array.IndexOf(rusLetters, el));
+		//				}
+		//			}
+		//		}
+		//		else
+		//		{
+		//			result = bn;
+		//			break;
+		//		}
+		//	}
+		//	return result.ToUpper();
+		//}
+
+		private static string CorrectBlockName(string blockName)
 		{
 			string result = "";
 
-			string[] engLetters = new string[] { "Q", "W", "E", "R", "T", "Y", "U", "I", "O", "P", "A", "S", "D", "F", "G", "H", "J", "K", "L", "Z", "X", "C", "V", "B", "N", "M" };
-			string[] rusLetters = new string[] { "Й", "Ц", "У", "К", "Е", "Н", "Г", "Ш", "Щ", "З", "Ф", "Ы", "В", "А", "П", "Р", "О", "Л", "Д", "Я", "Ч", "С", "М", "И", "Т", "Ь" };
-
-			foreach (char ch in bn)
+			foreach (char ch in blockName.ToUpper())
 			{
-				// Если русскими буквами			
+				if (ch == 'Й') { result += 'Q'; }
+				else if (ch == 'Ц') { result += 'W'; }
+				else if (ch == 'У') { result += 'E'; }
+				else if (ch == 'К') { result += 'R'; }
+				else if (ch == 'Е') { result += 'T'; }
+				else if (ch == 'Н') { result += 'Y'; }
+				else if (ch == 'Г') { result += 'U'; }
+				else if (ch == 'Ш') { result += 'I'; }
+				else if (ch == 'Щ') { result += 'O'; }
+				else if (ch == 'З') { result += 'P'; }
 
-				if (Convert.ToInt32(ch) >= 97 && Convert.ToInt32(ch) <= 122)
-				{
-					foreach (string el in rusLetters)
-					{
-						string tmp = char.ToString(ch);
-						if (string.Compare(tmp, el, true) == 0)
-						{
-							result += engLetters.ElementAt(Array.IndexOf(rusLetters, el));
-						}
-					}
-				}
+				else if (ch == 'Ф') { result += 'A'; }
+				else if (ch == 'Ы') { result += 'S'; }
+				else if (ch == 'В') { result += 'D'; }
+				else if (ch == 'А') { result += 'F'; }
+				else if (ch == 'П') { result += 'G'; }
+				else if (ch == 'Р') { result += 'H'; }
+				else if (ch == 'О') { result += 'J'; }
+				else if (ch == 'Л') { result += 'K'; }
+
+				else if (ch == 'Я') { result += 'Z'; }
+				else if (ch == 'Ч') { result += 'X'; }
+				else if (ch == 'С') { result += 'C'; }
+				else if (ch == 'М') { result += 'V'; }
+				else if (ch == 'И') { result += 'B'; }
+				else if (ch == 'Т') { result += 'N'; }
+				else if (ch == 'Ь') { result += 'M'; }
+
 				else
 				{
-					result = bn;
-					break;
+					result += ch;
 				}
 			}
-			return result;
+				return result.ToUpper();
 		}
 
 
 
-	
 
 
 	}

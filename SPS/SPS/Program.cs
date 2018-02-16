@@ -45,32 +45,32 @@ namespace Neelov.AutocadPlugin
 	}
 	
 
-	/// <summary>
-	/// Класс реализующий фильтрацию сообщений
-	/// </summary>
-	public class MyMessageFilter : System.Windows.Forms.IMessageFilter
-	{
-		public const int WM_KEYDOWN = 0x0100;
-		public const int WM_KEYUP = 0x0101;
+	///// <summary>
+	///// Класс реализующий фильтрацию сообщений
+	///// </summary>
+	//public class MyMessageFilter : System.Windows.Forms.IMessageFilter
+	//{
+	//	public const int WM_KEYDOWN = 0x0100;
+	//	public const int WM_KEYUP = 0x0101;
 
-		public bool bCancaled = false;
+	//	public bool bCancaled = false;
 
-		public bool PreFilterMessage(ref System.Windows.Forms.Message m)
-		{
-			if (m.Msg == WM_KEYDOWN || m.Msg == WM_KEYUP)
-			{
-				// Проверяем нажание ESC
-				System.Windows.Forms.Keys kc = (System.Windows.Forms.Keys)(int)m.WParam & System.Windows.Forms.Keys.KeyCode;
+	//	public bool PreFilterMessage(ref System.Windows.Forms.Message m)
+	//	{
+	//		if (m.Msg == WM_KEYDOWN || m.Msg == WM_KEYUP)
+	//		{
+	//			// Проверяем нажание ESC
+	//			System.Windows.Forms.Keys kc = (System.Windows.Forms.Keys)(int)m.WParam & System.Windows.Forms.Keys.KeyCode;
 
-				if (kc == System.Windows.Forms.Keys.Escape)
-				{
-					bCancaled = true;
-					return true;
-				}							
-			}
-			return false;
-		}
-	}
+	//			if (kc == System.Windows.Forms.Keys.Escape)
+	//			{
+	//				bCancaled = true;
+	//				return true;
+	//			}							
+	//		}
+	//		return false;
+	//	}
+	//}
 
 
 
