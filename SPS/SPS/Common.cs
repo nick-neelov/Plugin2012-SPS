@@ -310,8 +310,206 @@ namespace Neelov.AutocadPlugin
 			return Math.Sqrt(Math.Pow(pnt2.X - pnt1.X, 2) + Math.Pow(pnt2.Y - pnt2.Y, 2));
 		}
 
+		/// <summary>
+		/// Метод для определения индекса минимального элемента массива
+		/// </summary>
+		/// <param name="mass"> Массив целых чисел</param>
+		/// <returns>Индекс минимального элемента в массиве</returns>
+		static int GetMimIndexElemMas(int[] mass)
+		{
+			int index = 0;
+			int minElem = mass[0];
+
+			for (int i = 0; i < mass.GetLength(0); i++)
+			{
+				if (minElem > mass[i])
+				{
+					minElem = mass[i];
+					index = i;
+				}
+			}
+			return index;
+		}
+
+		/// <summary>
+		/// Получение координат точки, находящейся между двумя точками (центра)
+		/// </summary>
+		/// <param name="pnt1"> Точка 1</param>
+		/// <param name="pnt2"> Точка 2</param>
+		/// <returns>Координаты точки (центра)</returns>
+		static public Point3d CenterPointBetweenPoints(Point3d pnt1, Point3d pnt2)
+		{
+			return new Point3d((pnt1.X + pnt2.X) / 2, (pnt1.Y + pnt2.Y) / 2, (pnt1.Z + pnt2.Z) / 2);
+		}
+
+
+
+		/// <summary>
+		/// Метод для получения координат вставки текста с учетом минимального количества пересечений с другими блоками и текстом
+		/// </summary>
+		/// <param name="br"> Ссылка на вхождение блока</param>
+		/// <param name="portText"> Текстовая строка, котороя будет вставленна</param>
+		/// <returns> Массив [Координаты точки вставки текста] [Номер положения текста], </returns>
+		static public object[] GetPointToInsert(BlockReference br, string portText)
+		{
+			Document doc = Application.DocumentManager.MdiActiveDocument;
+			Database db = doc.Database;
+			Editor ed = doc.Editor;
+
+			// Угол вставки текста
+			double ang = 0;
+
+			// Результат вычислений
+			object[] result = new object[2];
+
+			// Промежуточная точка вставки  
+			Point3d preInsPoint = new Point3d();
+
+			// Массив для хранения количества пересечений 
+			int[] masIntersection = new int[4];
+
+			// Массив для хранения точек вставки текста
+			Point3d[] masPointInsert = new Point3d[4];
+
+			using (Transaction tr = db.TransactionManager.StartTransaction())
+			{
+				try
+				{
+					// Получаем точки габаритов контейнера объекта
+					Extents3d extBlk = br.GeometryExtentsBestFit();
+					// Нижний левфй угол
+					Point3d botLeftPoint = extBlk.MinPoint;
+					// Верхний правый угол
+					Point3d topRightPoint = extBlk.MaxPoint;
+					//Центр блока
+					Point3d cenPoint = CenterPointBetweenPoints(botLeftPoint, topRightPoint);
+
+					// Определяем точки секущей рамки для выбора объектов вокруг блока
+					Point3d fPointCrossWindow = new Point3d(botLeftPoint.X - 3000.0, botLeftPoint.Y - 3000.0, botLeftPoint.Z);
+					Point3d sPointCrossWindow = new Point3d(topRightPoint.X + 3000.0, topRightPoint.Y + 3000.0, topRightPoint.Z);
+
+					// Выбор объектов вокруг блока                    
+					SelectionSet ssObj = ed.SelectWindow(fPointCrossWindow, sPointCrossWindow).Value;
+
+					for (int i = 0; i <= 3; i++)
+					{
+						// Количество пресечений
+						int count = 0;
+						// Первое место вставки текста
+						if (i == 0)
+						{
+							preInsPoint = new Point3d(cenPoint.X + 350.0, cenPoint.Y + 50, cenPoint.Z);
+							ang = 0;
+						}
+						// Второе место вставки текста
+						if (i == 1)
+						{
+							preInsPoint = new Point3d(cenPoint.X - 50.0, cenPoint.Y - 350, cenPoint.Z);
+							ang = 270;
+						}
+						// Третье место вставки текста
+						if (i == 2)
+						{
+							preInsPoint = new Point3d(cenPoint.X - 1100, cenPoint.Y + 50, cenPoint.Z);
+							ang = 0;
+						}
+						// Четвертое место вставки текста
+						if (i == 3)
+						{
+							preInsPoint = new Point3d(cenPoint.X - 50.0, cenPoint.Y + 350, cenPoint.Z);
+							ang = 90.0;
+						}
+
+						// ПРроверяем пересечение текста с другими объектами
+						using (DBText text = new DBText())
+						{
+							text.TextString = portText;
+							text.Height = 200;
+							text.Position = preInsPoint;
+							text.Rotation = ConvertDegToRad(ang);
+
+							foreach (SelectedObject soEnt in ssObj)
+							{
+								// Ссылка на обхекты вокруг блока
+								Entity entObj = tr.GetObject(soEnt.ObjectId, OpenMode.ForRead) as Entity;
+								Point3dCollection pColl = new Point3dCollection();
+								Plane pln = new Plane();
+
+								text.IntersectWith(entObj, Intersect.OnBothOperands, pln, pColl, IntPtr.Zero, IntPtr.Zero);
+								// Количество пересечений
+								count = count + pColl.Count;
+							}
+						}
+						//// Записываем в массив количество пресечений
+						masIntersection[i] = count;
+
+						//// Записываем в массив координаты точки вставки текста
+						masPointInsert[i] = preInsPoint;
+					}
+					// Точка вставки текста с минимальным количеством пересечений
+					result[0] = masPointInsert[GetMimIndexElemMas(masIntersection)];
+
+					// Номер позициии для вставки текста
+					result[1] = GetMimIndexElemMas(masIntersection);
+				}
+
+				catch (System.Exception ex)
+				{
+					ed.WriteMessage("\n" + ex.Message);
+				}
+
+				finally
+				{
+					tr.Dispose();
+				}
+			}
+			return result;
+		}
+
+		public static void CreateText(string txt, Point3d pos, double angle)
+		{
+			// Устанавливаем текущий документ и базу данных
+			Document acDoc = Application.DocumentManager.MdiActiveDocument;
+			Database acCurDb = acDoc.Database;
+
+			// Начинаем транзакцию
+			using (Transaction acTrans = acCurDb.TransactionManager.StartTransaction())
+			{
+				// Открываем таблицу Блока для чтения
+				BlockTable acBlkTbl;
+				acBlkTbl = acTrans.GetObject(acCurDb.BlockTableId, OpenMode.ForRead) as BlockTable;
+
+				// Открываем запись таблицы Блока пространство Модели (Model space) для записи
+				BlockTableRecord acBlkTblRec;
+				acBlkTblRec = acTrans.GetObject(acBlkTbl[BlockTableRecord.ModelSpace], OpenMode.ForWrite) as BlockTableRecord;
+
+				// Создаем однострочный текстовый объект
+				DBText acText = new DBText();
+				acText.SetDatabaseDefaults();
+
+				acText.Position = pos;
+				acText.Height = 200;
+				acText.TextString = txt;
+				acText.Rotation = angle;
+
+				acBlkTblRec.AppendEntity(acText);
+				acTrans.AddNewlyCreatedDBObject(acText, true);
+
+				// Сохраняем изменения и закрываем транзакцию
+				acTrans.Commit();
+			}
+		}
+
 
 	}
+
+
+
+
+
+
+
+
 
 
 }
