@@ -22,7 +22,7 @@ namespace Neelov.AutocadPlugin
 		[CommandMethod("NK-SPS-INSERTEQVIPMENT")]
 		public void InsertEqvipment()
 		{
-			WorkWithPlans.InsertEqvipment();	
+			Insert.InsertEqvipment();	
 		}
 
 		/// <summary>
@@ -31,7 +31,7 @@ namespace Neelov.AutocadPlugin
 		[CommandMethod("NK-SPS-CONNECTSPS")]
 		public void SPSConnect()
 		{
-			ConnectEqvipment.ConnectSPS();
+			ConnectZptSPS.ConnectSPS();
 		}
 
 		/// <summary>

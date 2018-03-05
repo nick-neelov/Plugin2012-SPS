@@ -305,6 +305,12 @@ namespace Neelov.AutocadPlugin
 			return rad * 180 / Math.PI;
 		}
 
+		static public double DictanceBetweenBlocks(Point3d pnt1, Point3d pnt2)
+		{
+			return Math.Sqrt(Math.Pow(pnt2.X - pnt1.X, 2) + Math.Pow(pnt2.Y - pnt2.Y, 2));
+		}
+
+
 	}
 
 

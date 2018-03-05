@@ -13,6 +13,7 @@ namespace Neelov.AutocadPlugin
 	class Insert
 	{
 		private static string blockName;
+		
 
 		/// <summary>
 		/// Метод для установки блоков на планы
@@ -25,8 +26,7 @@ namespace Neelov.AutocadPlugin
 			Editor ed = doc.Editor;
 			Database db = doc.Database;
 
-			Point3d insPoint = new Point3d();
-			double rotation = 0;
+			Point3d insPoint = new Point3d();		
 
 
 
@@ -72,43 +72,42 @@ namespace Neelov.AutocadPlugin
 						{
 
 							case "1":
-								insPoint = new Point3d(insPoint.X - 212.13205, insPoint.Y - 212.13205, insPoint.Z);
-								rotation = Methods.ConvertDegToRad(45);
+								insPoint = new Point3d(insPoint.X - 300, insPoint.Y - 300, insPoint.Z);																
 								break;
 
 							case "2":
 								insPoint = new Point3d(insPoint.X, insPoint.Y - 300, insPoint.Z);
-								rotation = Methods.ConvertDegToRad(0);
+								
 								break;
 
 							case "3":
-								insPoint = new Point3d(insPoint.X + 212.13205, insPoint.Y - 212.13205, insPoint.Z);
-								rotation = Methods.ConvertDegToRad(-45);
+								insPoint = new Point3d(insPoint.X + 300, insPoint.Y - 300, insPoint.Z);
+								
 								break;
 
 							case "4":
 								insPoint = new Point3d(insPoint.X - 300, insPoint.Y, insPoint.Z);
-								rotation = Methods.ConvertDegToRad(0);
+								
 								break;
 
 							case "6":
 								insPoint = new Point3d(insPoint.X + 300, insPoint.Y, insPoint.Z);
-								rotation = Methods.ConvertDegToRad(0);
+								
 								break;
 
 							case "7":
-								insPoint = new Point3d(insPoint.X - 212.13205, insPoint.Y + 212.13205, insPoint.Z);
-								rotation = Methods.ConvertDegToRad(45);
+								insPoint = new Point3d(insPoint.X - 300, insPoint.Y + 300, insPoint.Z);
+								
 								break;
 
 							case "8":
 								insPoint = new Point3d(insPoint.X, insPoint.Y + 300, insPoint.Z);
-								rotation = Methods.ConvertDegToRad(0);
+								
 								break;
 
 							case "9":
-								insPoint = new Point3d(insPoint.X + 212.13205, insPoint.Y + 212.13205, insPoint.Z);
-								rotation = Methods.ConvertDegToRad(-45);
+								insPoint = new Point3d(insPoint.X + 300, insPoint.Y + 300, insPoint.Z);
+								
 								break;
 
 							default:
@@ -117,7 +116,7 @@ namespace Neelov.AutocadPlugin
 						}
 
 						// Вставляем блок
-						Common.Block.InsertWithRotation(blockName, insPoint, rotation);
+						Common.Block.InsertWithRotation(blockName, insPoint);
 
 						// Получаем последний вставленный блок
 						PromptSelectionResult psrLast = ed.SelectLast();
@@ -133,7 +132,7 @@ namespace Neelov.AutocadPlugin
 						switch (prMove.StringResult)
 						{
 							case "1":
-								insPoint = new Point3d(insPoint.X - 512.13205, insPoint.Y - 512.13205, insPoint.Z);								
+								insPoint = new Point3d(insPoint.X - 750, insPoint.Y, insPoint.Z);								
 								break;
 
 							case "2":
@@ -141,7 +140,7 @@ namespace Neelov.AutocadPlugin
 								break;
 								
 							case "3":
-								insPoint = new Point3d(insPoint.X + 512.13205, insPoint.Y - 512.13205, insPoint.Z);								
+								insPoint = new Point3d(insPoint.X + 750, insPoint.Y, insPoint.Z);								
 								break;
 
 							case "4":
@@ -153,7 +152,7 @@ namespace Neelov.AutocadPlugin
 								break;
 
 							case "7":
-								insPoint = new Point3d(insPoint.X - 512.13205, insPoint.Y + 512.13205, insPoint.Z);
+								insPoint = new Point3d(insPoint.X - 750, insPoint.Y, insPoint.Z);
 								break;
 
 							case "8":
@@ -161,7 +160,7 @@ namespace Neelov.AutocadPlugin
 								break;
 
 							case "9":
-								insPoint = new Point3d(insPoint.X + 512.13205, insPoint.Y + 512.13205, insPoint.Z);								
+								insPoint = new Point3d(insPoint.X + 750, insPoint.Y, insPoint.Z);								
 								break;
 
 							default:								
@@ -171,20 +170,20 @@ namespace Neelov.AutocadPlugin
 						// Автоматически вставляем пульт пациента
 						if (blockName == "ZU")
 						{
-							Common.Block.InsertWithRotation("LJ", insPoint, rotation);
+							Common.Block.InsertWithRotation("LJ", insPoint);
 						}
 						else if (blockName == "ZE")
 						{
-							Common.Block.InsertWithRotation("TP", insPoint, rotation);
+							Common.Block.InsertWithRotation("TP", insPoint);
 						}
 
 						else if (blockName == "ZVJ")
 						{
-							Common.Block.InsertWithRotation("VJ", insPoint, rotation);
+							Common.Block.InsertWithRotation("VJ", insPoint);
 						}
 						else if (blockName == "ZRJ")
 						{
-							Common.Block.InsertWithRotation("RJP", insPoint, rotation);
+							Common.Block.InsertWithRotation("RJP", insPoint);
 						}
 
 						// Получаем последний вставленный блок
@@ -214,45 +213,6 @@ namespace Neelov.AutocadPlugin
 
 
 		}
-
-
-		//// TODO Доделать метод для корректного ввода имен блоков
-		///// <summary>
-		///// Метод для корректировки вводимого имени блока
-		///// </summary>
-		///// <param name="bn">Имя блока от пользователя</param>
-		///// <returns></returns>
-		//private static string CorrectBlockName(string bn)
-		//{
-		//	string result = "";
-
-		//	string[] engLetters = new string[] { "Q", "W", "E", "R", "T", "Y", "U", "I", "O", "P", "A", "S", "D", "F", "G", "H", "J", "K", "L", "Z", "X", "C", "V", "B", "N", "M" };
-		//	string[] rusLetters = new string[] { "Й", "Ц", "У", "К", "Е", "Н", "Г", "Ш", "Щ", "З", "Ф", "Ы", "В", "А", "П", "Р", "О", "Л", "Д", "Я", "Ч", "С", "М", "И", "Т", "Ь" };
-
-		//	foreach (char ch in bn.ToUpper())
-		//	{
-		//		// Если русскими буквами			
-		//		int a = Convert.ToInt32(ch);
-
-		//		if (Convert.ToInt32(ch) >= 97 && Convert.ToInt32(ch) <= 122)
-		//		{
-		//			foreach (string el in rusLetters)
-		//			{
-		//				string tmp = char.ToString(ch);
-		//				if (string.Compare(tmp, el, true) == 0)
-		//				{
-		//					result += engLetters.ElementAt(Array.IndexOf(rusLetters, el));
-		//				}
-		//			}
-		//		}
-		//		else
-		//		{
-		//			result = bn;
-		//			break;
-		//		}
-		//	}
-		//	return result.ToUpper();
-		//}
 
 		private static string CorrectBlockName(string blockName)
 		{
