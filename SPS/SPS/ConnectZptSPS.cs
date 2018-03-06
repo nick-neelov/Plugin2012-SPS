@@ -19,7 +19,7 @@ namespace Neelov.AutocadPlugin
 	/// </summary>
 	class ConnectZptSPS
 	{
-
+		// 111
 		public static void ConnectSPS()
 		{
 			Document doc = Application.DocumentManager.MdiActiveDocument;
