@@ -18,30 +18,81 @@ namespace Neelov.AutocadPlugin
 	class Eqvipment
 	{
 		private string Room;
-		private string BlockName;		
+		private string BlockName;
 		private string NumberInSystem;
 		private string NameInSystem;
 		private string DistanceTo;
 		private string CabelType;
+		private Point3d InsertPointBlock; // ??
 
 		/// <summary>
 		/// Конструктор реализующий экземпляр класса Eqvipment
 		/// </summary>
-		/// <param name="Room"></param>
-		/// <param name="BlockName"></param>	
-		/// <param name="NumberInSystem"></param>
-		/// <param name="NameInSystem"></param>
-		/// <param name="DistanceTo"></param>
-		/// <param name="CabelType"></param>
-		public Eqvipment(string Room, string BlockName, string NumberInSystem, string NameInSystem, string DistanceTo, string CabelType)
+		/// <param name="Room">Номер помещения (сектора) </param>
+		/// <param name="BlockName">Имя блока</param>
+		/// <param name="NumberInSystem">Номер в системе</param>
+		/// <param name="NameInSystem">Обозначение в системе</param>
+		/// <param name="DistanceTo">Расстояние до предыдущего блока</param>
+		/// <param name="CabelType">Тип кабеля</param>
+		/// <param name="InsertPointBlock">Точка в ставки блока ?? </param>
+		public Eqvipment(string Room, string BlockName, string NumberInSystem, string NameInSystem, string DistanceTo, string CabelType, Point3d InsertPointBlock)
 		{
 			this.Room = Room;
-			this.BlockName = BlockName;			
+			this.BlockName = BlockName;
 			this.NumberInSystem = NumberInSystem;
 			this.NameInSystem = NameInSystem;
 			this.DistanceTo = DistanceTo;
 			this.CabelType = CabelType;
+			this.InsertPointBlock = InsertPointBlock;
 		}
+
+
+		/// <summary>
+		/// Свойство для доступу к номеру помещения, где установленно оборудование
+		/// </summary>
+		public string RoomNumber
+		{
+			get { return Room; }
+			set { }
+		}
+
+		/// <summary>
+		/// Свойство для доступу к номеру в системе
+		/// </summary>
+		public string Number
+		{
+			get { return NumberInSystem; }
+			set { }
+		}
+
+		/// <summary>
+		/// Свойство для доступу к имени в системе
+		/// </summary>
+		public string Name
+		{
+			get { return NameInSystem; }
+			set { }
+		}
+
+		/// <summary>
+		/// Свойство для доступа к длине кабеля до предыдущего устройства
+		/// </summary>
+		public string CabelLenght
+		{
+			get { return DistanceTo; }
+			set { }
+		}
+
+
+		/// <summary>
+		/// Свойство для доступу к марке кабеля
+		/// </summary>
+		public string CabelMark
+		{
+			get { return CabelType; }
+			set { }
+		}
+
 
 	}
 
@@ -60,8 +111,10 @@ namespace Neelov.AutocadPlugin
 			Editor ed = doc.Editor;
 			Database db = doc.Database;
 
-			// Список оборудования
-			List<Eqvipment> listEqvipment = new List<Eqvipment>();
+			// Список оборудования по типам
+			List<Eqvipment> listSM = new List<Eqvipment>(); // Список модулей SM
+			List<Eqvipment> listIP = new List<Eqvipment>(); // Список IP Оборудования
+			List<Eqvipment> listBus = new List<Eqvipment>(); // Список оборудования по шине
 
 			// Фильтр для выбора блоков
 			TypedValue[] typeBlock = new TypedValue[]
@@ -100,33 +153,78 @@ namespace Neelov.AutocadPlugin
 						Eqvipment eq = new Eqvipment
 						(
 							Common.Attributes.GetAttributre(br, "1"),
-							Common.Attributes.GetAttributre(br, "6"),						
+							Common.Attributes.GetAttributre(br, "6"),
 							Common.Attributes.GetAttributre(br, "11"),
 							Common.Attributes.GetAttributre(br, "12"),
 							Common.Attributes.GetAttributre(br, "15"),
-							Common.Attributes.GetAttributre(br, "16")
+							Common.Attributes.GetAttributre(br, "16"),
+							br.Position
 						);
 
-						switch(br.Name)
+						switch (br.Name)
 						{
-							case "":
+							// Добавляем в список  SM-оборудование
+							case "SM":
+								listSM.Add(eq);
 								break;
 
+							// Добавляем в список  IP-оборудование
+							case "TP":
+							case "KJ":
+							case "KJD":
+							case "SIJD":
+							case "SIJ":
+							case "SJD":
+							case "LJ":
+							case "VKJ":
+							case "VKJV":
+								listIP.Add(eq);
+								break;
+
+							// Добавляем в список  Bus-оборудование
+							case "SV":
+							case "TNV":
+							case "TANV":
+							case "TANVT":
+								listBus.Add(eq);
+								break;
+
+							// Выход по дефолту
 							default:
-								break;								
+								break;
 
 						}
-
-
-
-						listEqvipment.Add(eq);
 					}
-
-
-
 				}
 
 			}
+			// Сортируем списки по номеру в системе
+			// Для SM
+			var sortSM = from sort in listSM
+						 orderby sort.Number
+						 select sort;
+
+			// Для IP-Оборудования
+			var sortIP = from sort in listIP
+						 orderby sort.Number
+						 select sort;
+
+			// Для Bus-оборудования
+			var sortBus = from sort in listBus
+						  orderby sort.Number
+						  select sort;
+
+
+			using (Transaction tr = db.TransactionManager.StartTransaction())
+			{
+				
+
+
+			}
+
+
+
+
 
 
 
