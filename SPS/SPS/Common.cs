@@ -501,6 +501,35 @@ namespace Neelov.AutocadPlugin
 		}
 
 
+		/// <summary>
+		/// Метод для рисования линии
+		/// </summary>
+		/// <param name="pnt1">Точка 1</param>
+		/// <param name="pnt2">Точка 2</param>
+		/// <param name="layer">Имя слоя</param>
+		public static void CreateLine(Point3d pnt1, Point3d pnt2, string layer)
+		{
+			Document doc = Application.DocumentManager.MdiActiveDocument;
+			Database db = doc.Database;
+
+			using (Transaction tr = db.TransactionManager.StartTransaction())
+			{
+				BlockTable bt = tr.GetObject(db.BlockTableId, OpenMode.ForRead) as BlockTable;
+				BlockTableRecord btr = tr.GetObject(bt[BlockTableRecord.ModelSpace], OpenMode.ForWrite) as BlockTableRecord;
+
+				Line line = new Line(pnt1, pnt2);
+				line.SetDatabaseDefaults();
+
+				
+				line.Layer = layer;
+
+				btr.AppendEntity(line);
+				tr.AddNewlyCreatedDBObject(line, true);
+
+				tr.Commit();
+			}
+		}
+
 	}
 
 

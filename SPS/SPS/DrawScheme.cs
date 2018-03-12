@@ -14,7 +14,9 @@ using Autodesk.AutoCAD.Internal;
 
 namespace Neelov.AutocadPlugin
 {
-
+	/// <summary>
+	/// Класс, реализующий оборудование системы платной сигнализации
+	/// </summary>
 	class Eqvipment
 	{
 		private string Room;
@@ -59,9 +61,15 @@ namespace Neelov.AutocadPlugin
 		/// <summary>
 		/// Свойство для доступу к номеру в системе
 		/// </summary>
-		public string Number
+		//public string Number
+		//{
+		//	get { return NumberInSystem; }
+		//	set { }
+		//}
+
+		public int Number
 		{
-			get { return NumberInSystem; }
+			get { return Convert.ToInt32(NumberInSystem); }
 			set { }
 		}
 
@@ -92,17 +100,17 @@ namespace Neelov.AutocadPlugin
 			get { return CabelType; }
 			set { }
 		}
-
-
 	}
 
-
+	/// <summary>
+	/// Класс, реализующий отрисовку структурной схемы СПС на базе оборудования ZPT
+	/// </summary>
 	class DrawScheme
 	{
 		/// <summary>
 		/// Метод для отрисовки структурной схемы палатной сигнализации
 		/// </summary>
-		public void DrawStructuralSchemeZPT()
+		public static void DrawStructuralSchemeZPT()
 		{
 			Document doc = Application.DocumentManager.MdiActiveDocument;
 
@@ -201,40 +209,84 @@ namespace Neelov.AutocadPlugin
 			// Сортируем списки по номеру в системе
 			// Для SM
 			var sortSM = from sort in listSM
-						 orderby sort.Number
+						 orderby sort.Number 
 						 select sort;
+			sortSM.Reverse();
+
+		
 
 			// Для IP-Оборудования
 			var sortIP = from sort in listIP
-						 orderby sort.Number
+						 orderby sort.Number 
 						 select sort;
+			sortIP.Reverse();
 
 			// Для Bus-оборудования
 			var sortBus = from sort in listBus
-						  orderby sort.Number
+						  orderby sort.Number 
 						  select sort;
+			sortBus.Reverse();
+
+			
+			// Получаем точку вставки схемы
+			PromptPointResult pprScheme = ed.GetPoint("\nУкажите точку вставки схемы");
+			if (pprScheme.Status != PromptStatus.OK) { return; }
+
+			Point3d firstPoint = pprScheme.Value;
+			Point3d secondPoint = new Point3d(firstPoint.X + 8000, firstPoint.Y, firstPoint.Z);
 
 
 			using (Transaction tr = db.TransactionManager.StartTransaction())
 			{
-				
+
+				BlockTable bt = tr.GetObject(db.BlockTableId, OpenMode.ForWrite) as BlockTable;
+
+				List<Point3d> listPointsSM = new List<Point3d>();
+
+				//Работаем с модулями SM 
+				foreach (Eqvipment eq in sortSM)
+				{
+					// Рисуем отрезок кабеля 
+					Methods.CreateLine(firstPoint, secondPoint, "!СС Кабель магистральный");
+					//Получаем середину отрезка
+					Point3d cenPoint = Methods.CenterPointBetweenPoints(firstPoint, secondPoint);
+
+					// Вставляем блок SM
+					Common.Block.InsertWithRotation("SM", secondPoint);
+
+					// Вставляем текст с номером помещения, где установлен SM
+					Methods.CreateText("Сектор: " + eq.RoomNumber, new Point3d(secondPoint.X + 350, secondPoint.Y + 100, secondPoint.Z), 0);
+					// Вставляем текст с обозначение SM В системе
+					Methods.CreateText(eq.Name, new Point3d(secondPoint.X + 350, secondPoint.Y - 300, secondPoint.Z), 0);
+
+					//Вставляем тип кабеля между SM
+					Methods.CreateText(eq.CabelMark, new Point3d(cenPoint.X, cenPoint.Y + 50, cenPoint.Z), 0);
+					
+					//Вставляем длину кабеля между SM
+					Methods.CreateText(eq.CabelLenght + " м", new Point3d(cenPoint.X, cenPoint.Y - 250, cenPoint.Z), 0);
+
+					// Список точек куда вставлены SM 
+					listPointsSM.Add(secondPoint);
+					
+					//Смещаем точки вправо
+					firstPoint = secondPoint;
+					secondPoint = new Point3d(secondPoint.X + 8000, secondPoint.Y, secondPoint.Z);
+				}
+
+				listPointsSM.Reverse();
+
+				// Работаем с IP-оборудованим
+				foreach (Eqvipment eq in sortIP)
+				{
+					
 
 
+				}
+
+
+
+				tr.Commit();
 			}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 		}
 

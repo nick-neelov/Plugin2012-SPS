@@ -189,7 +189,7 @@ namespace Neelov.AutocadPlugin
 
 			//Производим общие вычисления
 			// расстояние между блоками с учетом 6 м запаса на опуски + 10%
-			double distanceToBlock = (Methods.DictanceBetweenBlocks(pFirstBlock, pSecondBlock) + 6000) / 1000 * 1.1;
+			double distanceToBlock = Math.Round((Methods.DictanceBetweenBlocks(pFirstBlock, pSecondBlock) + 6000) / 1000 * 1.2);
 
 			// Вычисления для блока 1
 			// Выполняем подключение магистрального оборудования
