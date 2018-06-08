@@ -172,6 +172,7 @@ namespace Neelov.AutocadPlugin
 						{
 							Common.Block.InsertWithRotation("LJ", insPoint);
 						}
+
 						else if (blockName == "ZE")
 						{
 							Common.Block.InsertWithRotation("TP", insPoint);
@@ -181,9 +182,15 @@ namespace Neelov.AutocadPlugin
 						{
 							Common.Block.InsertWithRotation("VJ", insPoint);
 						}
-						else if (blockName == "ZRJ")
+
+						else if (blockName == "RJP" || blockName == "RN")
 						{
-							Common.Block.InsertWithRotation("RJP", insPoint);
+							Common.Block.InsertWithRotation("ZRJ", insPoint);
+						}
+
+						else if (blockName == "EL")
+						{
+							Common.Block.InsertWithRotation("TEZ", insPoint);
 						}
 
 						// Получаем последний вставленный блок
