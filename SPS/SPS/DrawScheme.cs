@@ -278,6 +278,8 @@ namespace Neelov.AutocadPlugin
 				// Работаем с IP-оборудованим
 				foreach (Eqvipment eq in sortIP)
 				{
+
+
 					
 
 
