@@ -180,7 +180,7 @@ namespace Neelov.AutocadPlugin
 
 						else if (blockName == "ZVJ")
 						{
-							Common.Block.InsertWithRotation("VJ", insPoint);
+							Common.Block.InsertWithRotation("VJ", insPoint); // добавлен комментарий
 						}
 
 						else if (blockName == "RJP" || blockName == "RN")

@@ -1,14 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 using Autodesk.AutoCAD.ApplicationServices;
 using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.EditorInput;
 using Autodesk.AutoCAD.Geometry;
-using Autodesk.AutoCAD.Runtime;
 using Autodesk.AutoCAD.Internal;
 
 namespace Neelov.AutocadPlugin
@@ -284,10 +281,6 @@ namespace Neelov.AutocadPlugin
 					tr.Commit();
 				}
 			}
-
-
-
-
 		}
 	}
 
@@ -295,6 +288,85 @@ namespace Neelov.AutocadPlugin
 	internal static class Methods
 	{
 
+
+		/// <summary>
+		/// Метод для вычисления в какую сторону сдвить текст 
+		/// </summary>
+		/// <param name="moveSide">Направление смещения блока</param>
+		/// <param name="blockPosition">Координаты блока</param>
+		/// <returns></returns>
+		static internal Point3d FirstTextPosition(string moveSide, Point3d blockPosition)
+		{
+			Point3d result = new Point3d();
+
+			switch (moveSide)
+			{
+				case "2":
+					result = new Point3d(blockPosition.X + 50, blockPosition.Y - 350, blockPosition.Z);
+					break;
+
+				case "4":
+					result = new Point3d(blockPosition.X - 1500, blockPosition.Y + 50, blockPosition.Z);
+					break;
+
+				case "6":
+					result = new Point3d(blockPosition.X + 350, blockPosition.Y + 50, blockPosition.Z);
+					break;
+
+				case "8":
+					result = new Point3d(blockPosition.X - 50, blockPosition.Y + 350, blockPosition.Z);
+					break;
+
+				default:
+					result = new Point3d(blockPosition.X + 350, blockPosition.Y + 50, blockPosition.Z);
+					break;
+			}
+			return result;
+		}
+
+		static internal Point3d NextTextPosition(string moveSide, Point3d firstText)
+		{
+			Point3d result = new Point3d();
+			
+			switch (moveSide)
+			{
+				case "2":
+					result = new Point3d(firstText.X - 250, firstText.Y, firstText.Z);
+					break;
+
+				case "4":
+				case "6":
+					result = new Point3d(firstText.X, firstText.Y - 250, firstText.Z);
+					break;
+
+				case "8":
+					result = new Point3d(firstText.X + 250, firstText.Y, firstText.Z);
+					break;
+
+				default:
+					result = new Point3d(firstText.X, firstText.Y - 250, firstText.Z);
+					break;
+			}
+			return result;
+		}
+		
+		/// <summary>
+		/// Метод для вычисления поворота текста в радианах
+		/// </summary>
+		/// <param name="moveSide">Направление смещения блока</param>
+		/// <returns></returns>
+		static internal double TextRotation(string moveSide)
+		{
+			double result = 0;
+
+			if (moveSide == "8")
+				result = 90;
+			else if (moveSide == "2")
+				result = 270;
+
+			return ConvertDegToRad(result);
+		}
+		
 		static public double ConvertDegToRad(double deg)
 		{
 			return deg * Math.PI / 180;
@@ -341,8 +413,6 @@ namespace Neelov.AutocadPlugin
 		{
 			return new Point3d((pnt1.X + pnt2.X) / 2, (pnt1.Y + pnt2.Y) / 2, (pnt1.Z + pnt2.Z) / 2);
 		}
-
-
 
 		/// <summary>
 		/// Метод для получения координат вставки текста с учетом минимального количества пересечений с другими блоками и текстом
@@ -499,7 +569,6 @@ namespace Neelov.AutocadPlugin
 				acTrans.Commit();
 			}
 		}
-
 
 		/// <summary>
 		/// Метод для рисования линии

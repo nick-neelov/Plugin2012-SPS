@@ -1,16 +1,10 @@
 ﻿
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 using Autodesk.AutoCAD.ApplicationServices;
 using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.EditorInput;
 using Autodesk.AutoCAD.Geometry;
-using Autodesk.AutoCAD.Runtime;
-using Autodesk.AutoCAD.Internal;
 
 
 namespace Neelov.AutocadPlugin
@@ -18,9 +12,8 @@ namespace Neelov.AutocadPlugin
 	/// <summary>
 	/// Класс реализующий подключени оборудования
 	/// </summary>
-	class ConnectSVP
-	{
-		
+	class AV03_Connect
+	{		
 		public static void Connect()
 		{
 			Document doc = Application.DocumentManager.MdiActiveDocument;
@@ -44,6 +37,7 @@ namespace Neelov.AutocadPlugin
 			string fRoom = "";
 			string fMove = "";
 			string fRotate = "";
+			//string fPosition ="";
 			string fName = "";
 			string fMagistralFreeInputs = "";
 			string fAbonentFreeInputs = "";
@@ -59,6 +53,7 @@ namespace Neelov.AutocadPlugin
 			string sRoom = "";
 			string sMove = "";
 			string sRotate = "";
+			//string sPosition = "";
 			string sName = "";
 			string sMagistralFreeInputs = "";
 			string sAbonentFreeInputs = "";
@@ -69,12 +64,9 @@ namespace Neelov.AutocadPlugin
 			string sPrevRoom = "";
 			string sDistanceTo = "";
 			string sCabelType = "";
+						
 
 
-			
-			// сторона вставки и угол поворота текста
-			int dX1 = 0, dX2 = 0, dY1 = 0, dY2 = 0;
-			double angleText = 0;
 
 			// Выбираем первый блок, к которому подключаемся		
 			PromptSelectionOptions psoFirstBlock = new PromptSelectionOptions();
@@ -111,7 +103,18 @@ namespace Neelov.AutocadPlugin
 							fNumberInSystem = Common.Attributes.GetAttributre(brFirstBlock, "11"); // Номер в системе
 							if (fNumberInSystem == "")
 							{
-								fNumberInSystem = ed.GetString("\nУ блока " + fName + " нет обозначения в системе. Укажите его: ").StringResult;
+								fNumberInSystem = ed.GetString("\nУ блока " + fName + " нет обозначения (номера) в системе. Укажите его: ").StringResult;
+
+								// Вставляем текст с обозначение блока
+								Point3d text1Point = Methods.FirstTextPosition(sMove, pFirstBlock);
+								Point3d text2Point = Methods.NextTextPosition(sMove, text1Point);
+								double textAngle = Methods.TextRotation(sMove);
+
+								// Вставляем текст с обозначением блока
+								Methods.CreateText(fName + fNumberInSystem, text1Point, textAngle);
+								// Вставляем текст с высотой установки
+								Methods.CreateText("h = " + fHeight, text2Point, textAngle);
+
 							}
 
 							fNameInSystem = Common.Attributes.GetAttributre(brFirstBlock, "12"); // Обозначение в  системе
@@ -119,6 +122,7 @@ namespace Neelov.AutocadPlugin
 							fPrevRoom = Common.Attributes.GetAttributre(brFirstBlock, "14"); // Номер помещения оборудования, к которому подключаемся
 							fDistanceTo = Common.Attributes.GetAttributre(brFirstBlock, "15"); // Длина до оборудования, к которому подключаемся
 							fCabelType = Common.Attributes.GetAttributre(brFirstBlock, "16"); // Марка кабеля
+							
 
 							// Меням временно слой
 							oldLayerBlock = brFirstBlock.Layer;
@@ -127,6 +131,12 @@ namespace Neelov.AutocadPlugin
 					}
 					trFirst.Commit();
 				}
+
+				catch (Exception ex)
+				{
+					ed.WriteMessage("\nИсключение: " + ex.Message + "\nВ строке: " + ex.StackTrace);
+				}
+
 				finally
 				{
 					trFirst.Dispose();
@@ -137,7 +147,7 @@ namespace Neelov.AutocadPlugin
 			// Выбираем второй блок			
 			PromptSelectionOptions psoSecondBlock = new PromptSelectionOptions();
 
-			psoSecondBlock.MessageForAdding = "\nВыберите оборудование которое подключаем: ";
+			psoSecondBlock.MessageForAdding = ("\nВыберите оборудование которое подключаем: ");
 			PromptSelectionResult psrSecondBlock = ed.GetSelection(psoSecondBlock);
 
 			if (psrSecondBlock.Status != PromptStatus.OK) { return; }
@@ -180,6 +190,12 @@ namespace Neelov.AutocadPlugin
 
 					trSecond.Commit();
 				}
+
+				catch (Exception ex)
+				{
+					ed.WriteMessage("\nИсключение: " + ex.Message + "\nВ строке: " + ex.StackTrace);
+				}
+
 				finally
 				{
 					trSecond.Dispose();
@@ -188,14 +204,23 @@ namespace Neelov.AutocadPlugin
 
 
 			//Производим общие вычисления
-			// расстояние между блоками с учетом 6 м запаса на опуски + 10%
-			double distanceToBlock = Math.Round((Methods.DictanceBetweenBlocks(pFirstBlock, pSecondBlock) + 6000) / 1000 * 1.2);
+			// расстояние между блоками с учетом опуска + запас 20%
+			double opuski;
+			if (sHeight == "Стол" || sHeight == "Шкаф")
+				opuski = Convert.ToDouble(fHeight);
+			else if (fHeight == "Стол" || fHeight == "Шкаф")
+				opuski = Convert.ToDouble(sHeight);
+			else
+				opuski = Convert.ToDouble(fHeight) + Convert.ToDouble(sHeight);
+
+			
+			double distanceToBlock = Math.Round((Methods.DictanceBetweenBlocks(pFirstBlock, pSecondBlock)) + opuski / 1000 * 1.2);
 
 			// Вычисления для блока 1
 			// Выполняем подключение магистрального оборудования
-			if (sName == "RT" || sName == "SM")
+			if (fName == "NAP" && sName == "PD" || fName == "PD" && sName == "PD")
 			{
-				// Если есть свободные порты для подключения
+				// Проверяем есть ли свободные магистральные порты для подключения
 				if (Convert.ToInt32(fMagistralFreeInputs) != 0)
 				{
 					if (fNameInSystem == "")
@@ -203,7 +228,7 @@ namespace Neelov.AutocadPlugin
 						fNameInSystem = fName + "." + fNumberInSystem;
 					}
 
-					if (fName == "RT")
+					if (fName == "NAP")
 					{
 						// Добавляем номер в системе во второй блок
 						sNumberInSystem = fNumberInSystem + "1";
@@ -215,9 +240,9 @@ namespace Neelov.AutocadPlugin
 							sNameInSystem = sName + tmp;
 						}
 
-						//sNameInSystem = sName + "." + sNumberInSystem;
+					//	sNameInSystem = sName + "." + sNumberInSystem;
 					}
-					else if (fName == "SM")
+					else if (fName == "PD")
 					{
 						// Добавляем номер в системе во втрой блок
 						sNumberInSystem += Convert.ToString(Convert.ToInt32(fNumberInSystem) + 1);
@@ -235,18 +260,19 @@ namespace Neelov.AutocadPlugin
 					// Убераем 1 порт для подключения оборудования			
 					fMagistralFreeInputs = Convert.ToString(Convert.ToInt32(fMagistralFreeInputs) - 1);
 					sMagistralFreeInputs = Convert.ToString(Convert.ToInt32(sMagistralFreeInputs) - 1);
-
 				}
+
 				else
 				{
 					ed.WriteMessage("\nОтсутствуют свободные порты для подключения магистральных линий");
 					return;
 				}
 			}
-						
+				
+			// Подключение абонентского оборудования		
 			else
 			{
-				// Если есть свободные порты
+				// Проверяем есть ли есть свободные абонентские порты 
 				if (Convert.ToInt32(fAbonentFreeInputs) != 0)
 				{
 					if (fNameInSystem == "")
@@ -254,10 +280,10 @@ namespace Neelov.AutocadPlugin
 						fNameInSystem = fName + "." + fNumberInSystem;
 					}
 
-					if (fName == "SM")
+					if (fName == "PD" || fName == "SJ")
 					{
 						// Добавляем номер в системе во второй блок
-						sNumberInSystem = fNumberInSystem + Convert.ToString(7 - Convert.ToInt32(fAbonentFreeInputs));
+						sNumberInSystem = fNumberInSystem + Convert.ToString(5 - Convert.ToInt32(fAbonentFreeInputs));
 						string tmp = "";
 						// Добавляем имя во второй блок
 						foreach (char ch in sNumberInSystem)
@@ -266,8 +292,10 @@ namespace Neelov.AutocadPlugin
 							sNameInSystem = sName + tmp;
 						}
 					}
-					else if (fName == "KJ" || fName == "KJD" || fName == "SIJ")
+
+					else if (fName == "ZVJ" || fName == "RJP" || fName == "TEZ" || fName == "RJ" || fName == "SJ" || fName == "ZRJ")
 					{
+
 						// Добавляем номер в системе во второй блок
 						sNumberInSystem = fNumberInSystem + "1";
 						string tmp = "";
@@ -277,24 +305,33 @@ namespace Neelov.AutocadPlugin
 							tmp = tmp + "." + ch;
 							sNameInSystem = sName + tmp;
 						}
+
+						// Добавляем номер в системе во втрой блок
+						//sNumberInSystem += Convert.ToString(Convert.ToInt32(fNumberInSystem) + 1);
+
+						//// Добавляем номер в системе во втрой блок
+						//string tmp = "";
+						//foreach (char ch in sNumberInSystem)
+						//{
+						//	tmp = tmp + "." + ch;
+						//	sNameInSystem = sName + tmp;
+						//}
 					}
-					else if (fName == "TNV" || fName == "TANV" || fName == "TANVT" || fName == "SV")
-					{
-						// Добавляем номер в системе во втрой блок
-						sNumberInSystem += Convert.ToString(Convert.ToInt32(fNumberInSystem) + 1);
 
-						// Добавляем номер в системе во втрой блок
-						string tmp = "";
-						foreach (char ch in sNumberInSystem)
-						{
-							tmp = tmp + "." + ch;
-							sNameInSystem = sName + tmp;
-						}
-					}					
+					//else if (fName == "EL")
+					//{
+					//	// Добавляем номер в системе во второй блок
+					//	sNumberInSystem = fNumberInSystem + Convert.ToString(Convert.ToInt32(fAbonentFreeInputs));
+					//	string tmp = "";
+					//	// Добавляем имя во второй блок
+					//	foreach (char ch in sNumberInSystem)
+					//	{
+					//		tmp = tmp + "." + ch;
+					//		sNameInSystem = sName + tmp;
+					//	}
+					//}
 
-
-					fAbonentFreeInputs = Convert.ToString(Convert.ToInt32(fAbonentFreeInputs) - 1);
-				//	sAbonentFreeInputs = Convert.ToString(Convert.ToInt32(sAbonentFreeInputs) - 1);
+					fAbonentFreeInputs = Convert.ToString(Convert.ToInt32(fAbonentFreeInputs) - 1);				
 				}
 				else
 				{
@@ -312,18 +349,32 @@ namespace Neelov.AutocadPlugin
 			sPrevRoom = fRoom; // Номер помещения предыдущего блока
 
 			// Определяем тип кабеля
-			if (fName == "RT")
+			// 
+			if (fName == "NAP" || fName == "RJP")
 			{
-				sCabelType = "A";
+				sCabelType = "B";
 			}
-			else if (fName == "SM")
+
+			else if (fName == "KO" || fName == "SJ")
 			{
 				sCabelType = "A+B";
 			}
-			else if (fName == "KJ" || fName == "KJD" || fName == "SIJ" || fName == "TNV" || fName == "TANV" || fName == "TANVT")
+
+			else if (fName == "ZVJ" || fName == "ZRJ" || fName == "SVO")
+			{
+				sCabelType = "A";
+			}
+
+			else if(fName == "TEZ" || fName == "EL")
 			{
 				sCabelType = "C";
 			}
+
+			else if (fName == "VJ")
+			{
+				sCabelType = "Комплектный";
+			}
+
 			else
 			{
 				sCabelType = "";
@@ -344,9 +395,7 @@ namespace Neelov.AutocadPlugin
 							Common.Attributes.SetAttribute(brFirstBlock, "8", fAbonentFreeInputs);
 							Common.Attributes.SetAttribute(brFirstBlock, "11", fNumberInSystem);
 							Common.Attributes.SetAttribute(brFirstBlock, "12", fNameInSystem);
-
-
-
+							
 
 							// Устанавливаем слой после подключения
 							brFirstBlock.Layer = oldLayerBlock;
@@ -355,6 +404,12 @@ namespace Neelov.AutocadPlugin
 
 					trFirst.Commit();
 				}
+
+				catch (Exception ex)
+				{
+					ed.WriteMessage("\nИсключение: " + ex.Message + "\nВ строке: " + ex.StackTrace);
+				}
+
 				finally
 				{
 					trFirst.Dispose();
@@ -384,54 +439,19 @@ namespace Neelov.AutocadPlugin
 							Common.Attributes.SetAttribute(brSecondBlock, "15", Convert.ToString(distanceToBlock));
 							Common.Attributes.SetAttribute(brSecondBlock, "16", sCabelType);
 
-							//Определяем куда вставлять текст			
-							object[] insData = new object[2];
-							insData =  Methods.GetPointToInsert(brSecondBlock, sNameInSystem);
-							//Точка вставки
-							Point3d pntText = new Point3d();
-							pntText = (Point3d)insData[0];
-							// Позиция для вставки
-							int numPosition = (int)insData[1];
 
-							// Положение 1
-							if (numPosition == 0)
-							{
-								dY2 = -250;
-								angleText = Methods.ConvertDegToRad(0.0);
-								pntText = new Point3d(pntText.X, pntText.Y, pntText.Z);
-							}
-
-							//// Положение 2
-							if (numPosition == 1)
-							{
-								dX1 = -150;
-								dX2 = 150;
-								angleText = Methods.ConvertDegToRad(270.0);
-								
-							}
-
-							// Положение 3
-							if (numPosition == 2)
-							{
-								dY2 = -250;
-								angleText = Methods.ConvertDegToRad(0.0);
-							}
-
-							// Положение 4
-							if (numPosition == 3)
-							{
-								dX2 = 250;
-								angleText = Methods.ConvertDegToRad(90.0);
-							}
-
-							pntText = new Point3d(pntText.X + dX1, pntText.Y + dY1, pntText.Z);
+							Point3d text1Point = Methods.FirstTextPosition(sMove, brSecondBlock.Position);
+							Point3d text2Point = Methods.NextTextPosition(sMove, text1Point);
+							double textAngle = Methods.TextRotation(sMove);
 
 							// Вставляем текст с обозначением блока
-							Methods.CreateText(sNameInSystem, pntText, angleText);
+							Methods.CreateText(sNameInSystem, text1Point, textAngle);
 
 							// Вставляем текст с высотой установки
-							Methods.CreateText("h = " + sHeight, new Point3d(pntText.X + dX2, pntText.Y + dY2, pntText.Z), angleText);
-							
+							Methods.CreateText("h = " + sHeight, text2Point, textAngle);
+
+
+
 							// Устанавливаем слой после подключения
 							brSecondBlock.Layer = "!СС Оборудование";
 						}
@@ -439,21 +459,18 @@ namespace Neelov.AutocadPlugin
 
 					trSecond.Commit();
 				}
+
+				catch (Exception ex)
+				{
+					ed.WriteMessage("\nИсключение: " + ex.Message + "\nВ строке: " + ex.StackTrace);
+				}
+
 				finally
 				{
-					trSecond.Dispose();
+					trSecond.Dispose();					
 				}
 
 			}
-
-
-
-
-
-
-
-
-
 		}
 	}
 }

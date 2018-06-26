@@ -1,16 +1,10 @@
 ﻿
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 using Autodesk.AutoCAD.ApplicationServices;
 using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.EditorInput;
 using Autodesk.AutoCAD.Geometry;
-using Autodesk.AutoCAD.Runtime;
-using Autodesk.AutoCAD.Internal;
 
 
 namespace Neelov.AutocadPlugin
@@ -18,10 +12,10 @@ namespace Neelov.AutocadPlugin
 	/// <summary>
 	/// Класс реализующий подключени оборудования
 	/// </summary>
-	class ConnectZptSPS
+	class ConnectSPS
 	{
 		// 111
-		public static void ConnectSPS()
+		public static void Connect()
 		{
 			Document doc = Application.DocumentManager.MdiActiveDocument;
 			if (doc == null) return;
@@ -71,10 +65,7 @@ namespace Neelov.AutocadPlugin
 			string sCabelType = "";
 
 
-			
-			// сторона вставки и угол поворота текста
-			int dX1 = 0, dX2 = 0, dY1 = 0, dY2 = 0;
-			double angleText = 0;
+
 
 			// Выбираем первый блок, к которому подключаемся		
 			PromptSelectionOptions psoFirstBlock = new PromptSelectionOptions();
@@ -266,6 +257,7 @@ namespace Neelov.AutocadPlugin
 							sNameInSystem = sName + tmp;
 						}
 					}
+
 					else if (fName == "KJ" || fName == "KJD" || fName == "SIJ")
 					{
 						// Добавляем номер в системе во второй блок
@@ -345,9 +337,6 @@ namespace Neelov.AutocadPlugin
 							Common.Attributes.SetAttribute(brFirstBlock, "11", fNumberInSystem);
 							Common.Attributes.SetAttribute(brFirstBlock, "12", fNameInSystem);
 
-
-
-
 							// Устанавливаем слой после подключения
 							brFirstBlock.Layer = oldLayerBlock;
 						}
@@ -384,54 +373,70 @@ namespace Neelov.AutocadPlugin
 							Common.Attributes.SetAttribute(brSecondBlock, "15", Convert.ToString(distanceToBlock));
 							Common.Attributes.SetAttribute(brSecondBlock, "16", sCabelType);
 
-							//Определяем куда вставлять текст			
-							object[] insData = new object[2];
-							insData =  Methods.GetPointToInsert(brSecondBlock, sNameInSystem);
-							//Точка вставки
-							Point3d pntText = new Point3d();
-							pntText = (Point3d)insData[0];
-							// Позиция для вставки
-							int numPosition = (int)insData[1];
 
-							// Положение 1
-							if (numPosition == 0)
-							{
-								dY2 = -250;
-								angleText = Methods.ConvertDegToRad(0.0);
-								pntText = new Point3d(pntText.X, pntText.Y, pntText.Z);
-							}
+							Point3d text1Point = Methods.FirstTextPosition(sMove, brSecondBlock.Position);
+							Point3d text2Point = Methods.NextTextPosition(sMove, text1Point);
+							double textAngle = Methods.TextRotation(sMove);
 
-							//// Положение 2
-							if (numPosition == 1)
-							{
-								dX1 = -150;
-								dX2 = 150;
-								angleText = Methods.ConvertDegToRad(270.0);
+							
+
+
+							////Определяем куда вставлять текст			
+							//object[] insData = new object[2];
+							//insData =  Methods.GetPointToInsert(brSecondBlock, sNameInSystem);
+							////Точка вставки
+							//Point3d pntText = new Point3d();
+							//pntText = (Point3d)insData[0];
+							//// Позиция для вставки
+							//int numPosition = (int)insData[1];
+
+							//// Положение 1
+							//if (numPosition == 0)
+							//{
+							//	dY2 = -250;
+							//	angleText = Methods.ConvertDegToRad(0.0);
+							//	pntText = new Point3d(pntText.X, pntText.Y, pntText.Z);
+							//}
+
+							////// Положение 2
+							//if (numPosition == 1)
+							//{
+							//	dX1 = -150;
+							//	dX2 = 150;
+							//	angleText = Methods.ConvertDegToRad(270.0);
 								
-							}
+							//}
 
-							// Положение 3
-							if (numPosition == 2)
-							{
-								dY2 = -250;
-								angleText = Methods.ConvertDegToRad(0.0);
-							}
+							//// Положение 3
+							//if (numPosition == 2)
+							//{
+							//	dY2 = -250;
+							//	angleText = Methods.ConvertDegToRad(0.0);
+							//}
 
-							// Положение 4
-							if (numPosition == 3)
-							{
-								dX2 = 250;
-								angleText = Methods.ConvertDegToRad(90.0);
-							}
+							//// Положение 4
+							//if (numPosition == 3)
+							//{
+							//	dX2 = 250;
+							//	angleText = Methods.ConvertDegToRad(90.0);
+							//}
 
-							pntText = new Point3d(pntText.X + dX1, pntText.Y + dY1, pntText.Z);
+							//pntText = new Point3d(pntText.X + dX1, pntText.Y + dY1, pntText.Z);
+
+
 
 							// Вставляем текст с обозначением блока
-							Methods.CreateText(sNameInSystem, pntText, angleText);
+							Methods.CreateText(sNameInSystem, text1Point, textAngle);
 
 							// Вставляем текст с высотой установки
-							Methods.CreateText("h = " + sHeight, new Point3d(pntText.X + dX2, pntText.Y + dY2, pntText.Z), angleText);
-							
+							Methods.CreateText("h = " + sHeight + " м", text2Point, textAngle);
+
+
+
+
+
+
+
 							// Устанавливаем слой после подключения
 							brSecondBlock.Layer = "!СС Оборудование";
 						}

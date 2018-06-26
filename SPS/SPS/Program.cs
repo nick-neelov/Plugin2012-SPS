@@ -19,28 +19,45 @@ namespace Neelov.AutocadPlugin
 		/// <summary>
 		/// Комманда для вставки оборудования на планы
 		/// </summary>
-		[CommandMethod("NK-SPS-INSERTEQVIPMENT")]
+		[CommandMethod("NK-INSERTEQVIPMENT")]
 		public void InsertEqvipment()
 		{
 			Insert.InsertEqvipment();	
 		}
 
+		///// <summary>
+		///// Комманда для подключения оборудования 
+		///// </summary>
+		//[CommandMethod("NK-SPS-CONNECT")]
+		//public void SPSConnect()
+		//{
+		//	ConnectSPS.Connect();
+		//}
+
 		/// <summary>
 		/// Комманда для подключения оборудования 
 		/// </summary>
-		[CommandMethod("NK-SPS-CONNECTSPS")]
-		public void SPSConnect()
+		[CommandMethod("NK-AV03-CONNECT")]
+		public void Connect()
 		{
-			ConnectZptSPS.ConnectSPS();
+			AV03_Connect.Connect();
 		}
 
-		/// <summary>
-		/// Метод для отрисовки структурной схемы схемы
-		/// </summary>
-		[CommandMethod("NK-SPS-DRAWSTRUCTURALSCHEME")]
-		public void DrawStructuralScheme()
+
+		///// <summary>
+		///// Метод для отрисовки структурной схемы схемы
+		///// </summary>
+		//[CommandMethod("NK-SPS-DRAWSTRUCTURALSCHEME")]
+		//public void DrawStructuralScheme()
+		//{
+		//	DrawingOfThePersonnelCallSystemZPT.DrawStructuralSchemeZPT();
+		//}		
+
+
+		[CommandMethod("NK-AV03-STRUCTURALSCHEME")]
+			public void StructialScheme()
 		{
-			DrawScheme.DrawStructuralSchemeZPT();
-		}		
+			AV03_DrawScheme.AV03_Scheme();
+		}
 	}	
 }

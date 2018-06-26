@@ -105,7 +105,7 @@ namespace Neelov.AutocadPlugin
 	/// <summary>
 	/// Класс, реализующий отрисовку структурной схемы СПС на базе оборудования ZPT
 	/// </summary>
-	class DrawScheme
+	class DrawingOfThePersonnelCallSystemZPT
 	{
 		/// <summary>
 		/// Метод для отрисовки структурной схемы палатной сигнализации
@@ -292,7 +292,18 @@ namespace Neelov.AutocadPlugin
 
 		}
 
-
+	}
+	
+	/// <summary>
+	/// Класс реализующий отрисовку структурной схемы для вызова пациентов в кабинет врача
+	/// </summary>
+	class DrawingTheSystemOfCallingThePatientsZPT
+	{
 
 	}
+
+
+
+
+
 }

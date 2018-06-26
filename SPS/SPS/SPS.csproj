@@ -49,8 +49,10 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="AV03 DrawScheme.cs" />
     <Compile Include="Common.cs" />
-    <Compile Include="ConnectZptSPS.cs" />
+    <Compile Include="AV03_Connect.cs" />
+    <Compile Include="ConnectSPS.cs" />
     <Compile Include="DrawScheme.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
