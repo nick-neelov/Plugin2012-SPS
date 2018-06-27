@@ -26,7 +26,7 @@ namespace Neelov.AutocadPlugin
 			// Поля для атрибутов блока
 			string brRoom = "";
 			string brMove = "";
-			string brRotate = "";			
+			string brRotate = "";
 			string brName = "";
 			string brMagistralFreeInputs = "";
 			string brAbonentFreeInputs = "";
@@ -42,7 +42,7 @@ namespace Neelov.AutocadPlugin
 			TypedValue[] typeBlock = new TypedValue[]
 			{
 				new TypedValue((int)DxfCode.Start, "INSERT")
-			};			
+			};
 			SelectionFilter filter = new SelectionFilter(typeBlock);
 
 
@@ -52,12 +52,12 @@ namespace Neelov.AutocadPlugin
 			// Первая точка рамки
 			PromptPointResult firstPointCW = ed.GetPoint("\nУкажите первую точку рамки для выбора: ");
 			if (firstPointCW.Status != PromptStatus.OK) { return; }
-						// Вторая точка рамки
+			// Вторая точка рамки
 			PromptCornerOptions pCornOpt = new PromptCornerOptions("\nУкажите другой угол: ", firstPointCW.Value);
 			PromptPointResult secondPointCW = ed.GetCorner(pCornOpt);
 			if (secondPointCW.Status != PromptStatus.OK) { return; }
-						// Выбираем блоки внитри рамки
-			PromptSelectionResult psrAllBlock = ed.SelectWindow(firstPointCW.Value, secondPointCW.Value);
+			// Выбираем блоки внитри рамки
+			PromptSelectionResult psrAllBlock = ed.SelectWindow(firstPointCW.Value, secondPointCW.Value, filter);
 			if (psrAllBlock.Status != PromptStatus.OK) { return; }
 
 			//Если все ОК, создаем набор
@@ -65,7 +65,7 @@ namespace Neelov.AutocadPlugin
 
 
 			Point3d baseSchemePojnt = ed.GetPoint("\nУкажите точку вставки схемы: ").Value;
-			
+
 			using (Transaction tr = db.TransactionManager.StartTransaction())
 			{
 				try
@@ -91,12 +91,29 @@ namespace Neelov.AutocadPlugin
 						brCabelType = Common.Attributes.GetAttributre(br, "16"); // Марка кабеля *
 
 
-
+						// Базовые коордитаты (точка вставик 1 источника питания)
 						double baseX = baseSchemePojnt.X;
 						double baseY = baseSchemePojnt.Y;
 						double baseZ = 0;
 
+						//точка в ставки блоков на схеме
 						Point3d insPoint = new Point3d();
+
+						// Приращения координат для отрисовки разных систем 
+						int dY = 0;
+						int dX = 0;
+
+						// последня цифра в обозначнии номера в системе
+						int lastNumber;
+
+						LayerTable lt = tr.GetObject(db.LayerTableId, OpenMode.ForRead) as LayerTable;
+						string layer = "0";
+
+						string txtDist;
+						if (brDistanceTo != "")
+							txtDist = Math.Round(Convert.ToDouble(brDistanceTo) / 1000, 1, MidpointRounding.ToEven).ToString();
+						else
+							txtDist = "Шнур";
 
 						switch (brName)
 						{
@@ -104,56 +121,555 @@ namespace Neelov.AutocadPlugin
 							case "NAP":
 								if (brNumberInSystem == "1")
 								{
-									//Находим точку вставки блока для 1 источника питания в системе
+									//Находим точку вставки блока источника питания c №1 в системе
 									insPoint = new Point3d(baseX, baseY, baseZ);
 								}
 								else
 								{
-									//Находим точку вставки блока для все последующих
-									insPoint = new Point3d(baseX + 5000 * Convert.ToInt32(brNumberInSystem), baseY, baseZ);									
+									//Находим точку вставки блока для все последующих источников питания
+									insPoint = new Point3d(baseX, baseY + 7000 * Convert.ToInt32(brNumberInSystem), baseZ);
 								}
 
+								// Вставляем тексты с обозначением и номером помещения
+								Methods.CreateText(brNameInSystem, new Point3d(insPoint.X - 100, insPoint.Y + 350, 0), 90);
+								Methods.CreateText(brRoom, new Point3d(insPoint.X + 300, insPoint.Y + 350, 0), 90);
 
+																
 								// Вставляем блок 
 								Common.Block.InsertWithRotation("NAP", insPoint);
-
-								// Рисуем линиюма гистрального кабеля до следующего блока							
-								//Methods.CreateLine(new Point3d(baseX, baseY, baseZ), new Point3d(baseX + 8000, baseY, baseZ), "0");
 								break;
+
+
 
 							// Работа с коробками
 							case "PD":
-								if (brNumberInSystem == "11")
+								//Проверяем наличие слоя !СС Кабель питания
+								if (lt.Has("!СС Кабель электропитания"))
+									layer = "!СС Кабель электропитания";
+								else
+									layer = "0";
+								
+								// последняя цифра номера в системе для размещения на схеме
+								lastNumber = Convert.ToInt32(brNumberInSystem.Substring(1, 1));
+
+								// предпоследняя цифра номера в системе для размещения на схеме
+								int predLastNummber = Convert.ToInt32(brNumberInSystem.Substring(0, 1));
+
+								// Точка вставки для блоков коробок PD
+								if (predLastNummber == 1)
 								{
+									insPoint = new Point3d(baseX + 8000 * lastNumber, baseY, baseZ);
+								}
+								else
+								{
+									insPoint = new Point3d(baseX + 8000 * lastNumber, baseY + 7000 * predLastNummber, baseZ);
+								}				
+
+								// Рисуем мальстальную линию 
+								Methods.CreateLine(insPoint, new Point3d(insPoint.X - 8000, insPoint.Y, insPoint.Z), layer);
+
+								// Находим центр линии 
+								Point3d txtPnt = Methods.CenterPointBetweenPoints(insPoint, new Point3d(insPoint.X - 8000, insPoint.Y, insPoint.Z));
+
+								// Вставляем текст с типом кабеля
+								Methods.CreateText(brCabelType, new Point3d(txtPnt.X, txtPnt.Y + 100, 0), 0);
+														
+								// Вставляем текст с длиной кабеля
+								Methods.CreateText(txtDist.ToString() + " м", new Point3d(txtPnt.X, txtPnt.Y - 250, 0), 0);
+
+								Methods.CreateText(brNameInSystem, new Point3d(insPoint.X - 100, insPoint.Y - 1200, 0), 90);
+								Methods.CreateText(brRoom, new Point3d(insPoint.X + 300, insPoint.Y - 700, 0), 90);
+
+								// Вставляем блок коробки								
+								Common.Block.InsertWithRotation("PD", insPoint);
+								break;
+
+
+							// Работа с оборудованием
+							case "ZVJ":
+							case "ZRJ":
+							case "SVO":
+							case "SV-OS":
+
+								//Проверяем наличие слоя !СС КаБель абонентский
+								if (lt.Has("!СС КаБель абонентский"))
+									layer = "!СС КаБель абонентский";
+								else
+									layer = "0";
+
+
+								// смещения по Y для первого блока
+								if (brNumberInSystem.Substring(0, 1) == "1")
+								{
+								}
+								// Смещения по Y для последующих блоков
+								else
+								{
+									dY = 7000 * Convert.ToInt32(brNumberInSystem.Substring(0, 1));
+								}
+
+								// Смещение по X для первого блока
+								if (brNumberInSystem.Substring(1, 1) == "1")
+								{
+									dX = 8000;
+								}
+								// Смещение по X для последеющих блоков
+								else
+								{
+									dX = 8000 * Convert.ToInt32(brNumberInSystem.Substring(1, 1));
+								}
+
+								lastNumber = Convert.ToInt32(brNumberInSystem.Substring(2, 1));
+
+								// Определям точку вставки в соответствии с номером
+								if (brNumberInSystem.Substring(2, 1) == "1")
+								{
+									insPoint = new Point3d(baseX + dX - 1300, baseY + dY + 2000, 0);
+
+									// Рисуем абонeyтскую линию, 1 участок
+									Methods.CreateLine(new Point3d(insPoint.X, insPoint.Y, 0), new Point3d(insPoint.X, insPoint.Y - 1700, 0), layer);
+									
+									// Находим центр линии 
+									txtPnt = Methods.CenterPointBetweenPoints(new Point3d(insPoint.X, insPoint.Y, 0), new Point3d(insPoint.X, insPoint.Y - 1700, 0));
+									
+									// Вставляем текст с типом кабеля
+									Methods.CreateText(brCabelType, new Point3d(txtPnt.X - 100 , txtPnt.Y - 450, 0), 90);
+																		
+									// Вставляем текст с длиной кабеля
+									Methods.CreateText(txtDist.ToString() + " м", new Point3d(txtPnt.X + 250, txtPnt.Y - 450, 0), 90);
+
+									// Рисуем абонeyтскую линию, 2 участок
+									Methods.CreateLine(new Point3d(insPoint.X, insPoint.Y - 1700, 0), new Point3d(insPoint.X + 1300, insPoint.Y - 1700, 0), layer);
+								}
+
+								else if (brNumberInSystem.Substring(2, 1) == "2")
+								{
+									insPoint = new Point3d(baseX + dX + 1300, baseY + dY + 2000, 0);
+
+									//// Рисуем абонeyтскую линию, 1 участок
+									Methods.CreateLine(new Point3d(insPoint.X, insPoint.Y, 0), new Point3d(insPoint.X, insPoint.Y - 1700, 0), layer);
+
+									//// Находим центр линии 
+									txtPnt = Methods.CenterPointBetweenPoints(new Point3d(insPoint.X, insPoint.Y, 0), new Point3d(insPoint.X, insPoint.Y - 1700, 0));
+
+									// Вставляем текст с типом кабеля
+									Methods.CreateText(brCabelType, new Point3d(txtPnt.X - 100, txtPnt.Y - 450, 0), 90);
+
+									// Вставляем текст с длиной кабеля
+									Methods.CreateText(txtDist.ToString() + " м", new Point3d(txtPnt.X + 250, txtPnt.Y - 450, 0), 90);
+
+									//// Рисуем абонeyтскую линию, 2 участок
+									Methods.CreateLine(new Point3d(insPoint.X, insPoint.Y - 1700, 0), new Point3d(insPoint.X - 1300, insPoint.Y - 1700, 0), layer);
 
 								}
 
-								// последняя цифра номера в системе для размещения на схеме
-								int posNumber = Convert.ToInt32(brNumberInSystem.Substring(brNumberInSystem.Length - 1));
+								else if (brNumberInSystem.Substring(2, 1) == "3")
+								{
+									insPoint = new Point3d(baseX + dX - 1300, baseY + dY - 2000, 0);
 
-								// Точка вставки для блоков коробок PD
-								insPoint = new Point3d(baseX + 8000 * posNumber, baseY, baseZ);
-								Common.Block.InsertWithRotation("PD", insPoint);
-								// Магистральную линию
-								Methods.CreateLine(insPoint, new Point3d(insPoint.X + 8000, insPoint.Y, insPoint.Z), "0");
+									// Рисуем абонeyтскую линию, 1 участок
+									Methods.CreateLine(new Point3d(insPoint.X, insPoint.Y, 0), new Point3d(insPoint.X, insPoint.Y + 1700, 0), layer);
+
+									// Находим центр линии 
+									txtPnt = Methods.CenterPointBetweenPoints(new Point3d(insPoint.X, insPoint.Y, 0), new Point3d(insPoint.X, insPoint.Y + 1700, 0));
+
+									// Вставляем текст с типом кабеля
+									Methods.CreateText(brCabelType, new Point3d(txtPnt.X - 100, txtPnt.Y - 150, 0), 90);
+
+									// Вставляем текст с длиной кабеля
+									Methods.CreateText(txtDist.ToString() + " м", new Point3d(txtPnt.X + 250, txtPnt.Y - 150, 0), 90);
+
+									// Рисуем абонeyтскую линию, 2 участок
+									Methods.CreateLine(new Point3d(insPoint.X, insPoint.Y + 1700, 0), new Point3d(insPoint.X + 1300, insPoint.Y + 1700, 0), layer);
+
+								}
+
+								else if (brNumberInSystem.Substring(2, 1) == "4")
+								{
+									insPoint = new Point3d(baseX + dX + 1300, baseY + dY - 2000, 0);
+
+									//// Рисуем абонeyтскую линию, 1 участок
+									Methods.CreateLine(new Point3d(insPoint.X, insPoint.Y, 0), new Point3d(insPoint.X, insPoint.Y + 1700, 0), layer);
+
+									//// Находим центр линии 
+									txtPnt = Methods.CenterPointBetweenPoints(new Point3d(insPoint.X, insPoint.Y, 0), new Point3d(insPoint.X, insPoint.Y + 1700, 0));
+
+									// Вставляем текст с типом кабеля
+									Methods.CreateText(brCabelType, new Point3d(txtPnt.X - 100, txtPnt.Y - 150, 0), 90);
+
+									// Вставляем текст с длиной кабеля
+									Methods.CreateText(txtDist.ToString() + " м", new Point3d(txtPnt.X + 250, txtPnt.Y - 150, 0), 90);
+
+									//// Рисуем абонeyтскую линию, 2 участок
+									Methods.CreateLine(new Point3d(insPoint.X, insPoint.Y + 1700, 0), new Point3d(insPoint.X - 1300, insPoint.Y + 1700, 0), layer);
+
+								}
+
+
+								Methods.CreateText(brNameInSystem, new Point3d(insPoint.X + 350, insPoint.Y + 100, 0), 0);
+								Methods.CreateText(brRoom, new Point3d(insPoint.X + 350, insPoint.Y - 300, 0), 0);
+
+
+								Common.Block.InsertWithRotation(br.Name, insPoint);
 								break;
 
+							case "SJ":
+
+								if (lt.Has("!СС КаБель абонентский"))
+									layer = "!СС КаБель абонентский";
+								else
+									layer = "0";
+
+								// смещения по Y для первого блока
+								if (brNumberInSystem.Substring(0, 1) == "1")
+								{
+								}
+								// Смещения по Y для последующих блоков
+								else
+								{
+									dY = 7000 * Convert.ToInt32(brNumberInSystem.Substring(0, 1));
+								}
+
+								// Смещение по X для первого блока
+								if (brNumberInSystem.Substring(1, 1) == "1")
+								{
+									dX = 8000;
+								}
+								// Смещение по X для последеющих блоков
+								else
+								{
+									dX = 8000 * Convert.ToInt32(brNumberInSystem.Substring(1, 1));
+								}
+								
+								// Определям точку вставки в соответствии с номером
+								if (brNumberInSystem.Substring(2, 1) == "1")
+								{
+									insPoint = new Point3d(baseX + dX, baseY + dY + 2000, 0);
+
+									// Рисуем абонeyтскую линию, 1 участок
+									Methods.CreateLine(new Point3d(insPoint.X, insPoint.Y, 0), new Point3d(insPoint.X, insPoint.Y - 2000, 0), layer);
+
+									// Находим центр линии 
+									txtPnt = Methods.CenterPointBetweenPoints(new Point3d(insPoint.X, insPoint.Y, 0), new Point3d(insPoint.X, insPoint.Y - 2000, 0));
+
+									// Вставляем текст с типом кабеля
+									Methods.CreateText(brCabelType, new Point3d(txtPnt.X - 100, txtPnt.Y - 450, 0), 90);
+
+									// Вставляем текст с длиной кабеля
+									Methods.CreateText(txtDist.ToString() + " м", new Point3d(txtPnt.X + 250, txtPnt.Y - 450, 0), 90);
+									
+								}
 
 
+								Methods.CreateText(brNameInSystem, new Point3d(insPoint.X - 100, insPoint.Y + 350, 0), 90);
+								Methods.CreateText(brRoom, new Point3d(insPoint.X + 300, insPoint.Y + 350, 0), 90);						
+
+								Common.Block.InsertWithRotation(br.Name, insPoint);
+								break;
+								
+
+							case "VJ":
+							case "RJ":
+							case "RJP":
+
+								if (lt.Has("!СС КаБель абонентский"))
+									layer = "!СС КаБель абонентский";
+								else
+									layer = "0";
+
+								// Смещения по Y для последующих блоков с номером 2 и больше
+								if (brNumberInSystem.Substring(0, 1) != "1")
+								{
+									dY = 7000 * Convert.ToInt32(brNumberInSystem.Substring(0, 1));
+								}
+
+								// Смещение по X для первого блока
+								if (brNumberInSystem.Substring(1, 1) == "1")
+								{
+									dX = 8000;
+								}
+								// Смещение по X для последеющих блоков
+								else
+								{
+									dX = 8000 * Convert.ToInt32(brNumberInSystem.Substring(1, 1));
+								}
+
+								// Определям точку вставки в соответствии с номером
+								if (brNumberInSystem.Substring(2, 1) == "1")
+								{
+									insPoint = new Point3d(baseX + dX - 1300, baseY + dY + 4000, 0);
+
+									Methods.CreateLine(new Point3d(insPoint.X, insPoint.Y, 0), new Point3d(insPoint.X, insPoint.Y - 2000, 0), layer);
+									// Находим центр линии 
+									txtPnt = Methods.CenterPointBetweenPoints(new Point3d(insPoint.X, insPoint.Y, 0), new Point3d(insPoint.X, insPoint.Y - 2000, 0));
+
+									// Вставляем текст с типом кабеля
+									Methods.CreateText(brCabelType, new Point3d(txtPnt.X - 100, txtPnt.Y - 450, 0), 90);
+
+									// Вставляем текст с длиной кабеля
+									Methods.CreateText(txtDist.ToString() + " м", new Point3d(txtPnt.X + 250, txtPnt.Y - 450, 0), 90);
+								}
+
+								else if (brNumberInSystem.Substring(2, 1) == "2")
+								{
+									insPoint = new Point3d(baseX + dX + 1300, baseY + dY + 4000, 0);
+
+									Methods.CreateLine(new Point3d(insPoint.X, insPoint.Y, 0), new Point3d(insPoint.X, insPoint.Y - 2000, 0), layer);
+									// Находим центр линии 
+									txtPnt = Methods.CenterPointBetweenPoints(new Point3d(insPoint.X, insPoint.Y, 0), new Point3d(insPoint.X, insPoint.Y - 2000, 0));
+
+									// Вставляем текст с типом кабеля
+									Methods.CreateText(brCabelType, new Point3d(txtPnt.X - 100, txtPnt.Y - 450, 0), 90);
+
+									// Вставляем текст с длиной кабеля
+									Methods.CreateText(txtDist.ToString() + " м", new Point3d(txtPnt.X + 250, txtPnt.Y - 450, 0), 90);
+								}
+								else if (brNumberInSystem.Substring(2, 1) == "3")
+								{
+									insPoint = new Point3d(baseX + dX - 1300, baseY + dY - 4000, 0);
+									Methods.CreateLine(new Point3d(insPoint.X, insPoint.Y, 0), new Point3d(insPoint.X, insPoint.Y + 2000, 0), layer);
+									// Находим центр линии 
+									txtPnt = Methods.CenterPointBetweenPoints(new Point3d(insPoint.X, insPoint.Y, 0), new Point3d(insPoint.X, insPoint.Y + 2000, 0));
+
+									// Вставляем текст с типом кабеля
+									Methods.CreateText(brCabelType, new Point3d(txtPnt.X - 100, txtPnt.Y - 450, 0), 90);
+
+									// Вставляем текст с длиной кабеля
+									Methods.CreateText(txtDist.ToString() + " м", new Point3d(txtPnt.X + 250, txtPnt.Y - 450, 0), 90);
+								}
+								else if (brNumberInSystem.Substring(2, 1) == "4")
+								{
+									insPoint = new Point3d(baseX + dX + 1300, baseY + dY - 4000, 0);
+									Methods.CreateLine(new Point3d(insPoint.X, insPoint.Y, 0), new Point3d(insPoint.X, insPoint.Y + 2000, 0), layer);
+									// Находим центр линии 
+									txtPnt = Methods.CenterPointBetweenPoints(new Point3d(insPoint.X, insPoint.Y, 0), new Point3d(insPoint.X, insPoint.Y + 2000, 0));
+
+									// Вставляем текст с типом кабеля
+									Methods.CreateText(brCabelType, new Point3d(txtPnt.X - 100, txtPnt.Y - 450, 0), 90);
+
+									// Вставляем текст с длиной кабеля
+									Methods.CreateText(txtDist.ToString() + " м", new Point3d(txtPnt.X + 250, txtPnt.Y - 450, 0), 90);
+								}
 
 
+								Methods.CreateText(brNameInSystem, new Point3d(insPoint.X + 350, insPoint.Y + 100, 0), 0);
+								Methods.CreateText(brRoom, new Point3d(insPoint.X + 350, insPoint.Y - 300, 0), 0);
+
+								Common.Block.InsertWithRotation(br.Name, insPoint);
+								break;
+
+							case "TEZ":
+
+								if (lt.Has("!СС КаБель абонентский"))
+									layer = "!СС КаБель абонентский";
+								else
+									layer = "0";
 
 
+								// Смещения по Y для блоков
+								if (brNumberInSystem.Substring(0, 1) != "1")
+								{
+									dY = 7000 * Convert.ToInt32(brNumberInSystem.Substring(0, 1));
+								}
 
+								// Смещение по X для первого блока
+								if (brNumberInSystem.Substring(1, 1) == "1")
+								{
+									dX = 8000;
+								}
+								// Смещение по X для последеющих блоков
+								else
+								{
+									dX = 8000 * Convert.ToInt32(brNumberInSystem.Substring(1, 1));
+								}
+
+								// Определям точку вставки TEZ в соответствии с местом вставки SJ
+								if (brNumberInSystem.Substring(2, 1) == "1")
+								{
+
+									if (brNumberInSystem.Substring(3, 1) == "3")
+									{
+										insPoint = new Point3d(baseX + dX - 3500, baseY + dY + 4000, 0);
+										Methods.CreateLine(new Point3d(insPoint.X, insPoint.Y, 0), new Point3d(insPoint.X, insPoint.Y - 2300, 0), layer);
+										// Находим центр линии 
+										txtPnt = Methods.CenterPointBetweenPoints(new Point3d(insPoint.X, insPoint.Y, 0), new Point3d(insPoint.X, insPoint.Y - 2300, 0));
+
+										// Вставляем текст с типом кабеля
+										Methods.CreateText(brCabelType, new Point3d(txtPnt.X - 100, txtPnt.Y - 450, 0), 90);
+
+										// Вставляем текст с длиной кабеля
+										Methods.CreateText(txtDist.ToString() + " м", new Point3d(txtPnt.X + 250, txtPnt.Y - 450, 0), 90);
+
+										//Участок линии 2
+										Methods.CreateLine(new Point3d(insPoint.X, insPoint.Y - 2300, 0), new Point3d(insPoint.X + 3200, insPoint.Y - 2300, 0), layer);
+									}
+
+
+									else if (brNumberInSystem.Substring(3, 1) == "1")
+									{
+										insPoint = new Point3d(baseX + dX - 1200, baseY + dY + 4000, 0);
+										Methods.CreateLine(new Point3d(insPoint.X, insPoint.Y, 0), new Point3d(insPoint.X, insPoint.Y - 1700, 0), layer);
+
+										// Находим центр линии 
+										txtPnt = Methods.CenterPointBetweenPoints(new Point3d(insPoint.X, insPoint.Y, 0), new Point3d(insPoint.X, insPoint.Y - 1700, 0));
+
+										// Вставляем текст с типом кабеля
+										Methods.CreateText(brCabelType, new Point3d(txtPnt.X - 100, txtPnt.Y - 450, 0), 90);
+
+										// Вставляем текст с длиной кабеля
+										Methods.CreateText(txtDist.ToString() + " м", new Point3d(txtPnt.X + 250, txtPnt.Y - 450, 0), 90);
+
+										//Участок линии 2
+										Methods.CreateLine(new Point3d(insPoint.X, insPoint.Y - 1700, 0), new Point3d(insPoint.X + 900, insPoint.Y - 1700, 0), layer);
+									}
+
+
+									else if (brNumberInSystem.Substring(3, 1) == "2")
+									{
+										insPoint = new Point3d(baseX + dX + 1200, baseY + dY + 4000, 0);
+
+										Methods.CreateLine(new Point3d(insPoint.X, insPoint.Y, 0), new Point3d(insPoint.X, insPoint.Y - 1700, 0), layer);
+
+										// Находим центр линии 
+										txtPnt = Methods.CenterPointBetweenPoints(new Point3d(insPoint.X, insPoint.Y, 0), new Point3d(insPoint.X, insPoint.Y - 1700, 0));
+
+										// Вставляем текст с типом кабеля
+										Methods.CreateText(brCabelType, new Point3d(txtPnt.X - 100, txtPnt.Y - 450, 0), 90);
+
+										// Вставляем текст с длиной кабеля
+										Methods.CreateText(txtDist.ToString() + " м", new Point3d(txtPnt.X + 250, txtPnt.Y - 450, 0), 90);
+
+										//Участок линии 2
+										Methods.CreateLine(new Point3d(insPoint.X, insPoint.Y - 1700, 0), new Point3d(insPoint.X - 900, insPoint.Y - 1700, 0), layer);
+
+									}
+
+									else if (brNumberInSystem.Substring(3, 1) == "4")
+									{
+										insPoint = new Point3d(baseX + dX + 3500, baseY + dY + 4000, 0);
+
+										Methods.CreateLine(new Point3d(insPoint.X, insPoint.Y, 0), new Point3d(insPoint.X, insPoint.Y - 2300, 0), layer);
+										// Находим центр линии 
+										txtPnt = Methods.CenterPointBetweenPoints(new Point3d(insPoint.X, insPoint.Y, 0), new Point3d(insPoint.X, insPoint.Y - 2300, 0));
+
+										// Вставляем текст с типом кабеля
+										Methods.CreateText(brCabelType, new Point3d(txtPnt.X - 100, txtPnt.Y - 450, 0), 90);
+
+										// Вставляем текст с длиной кабеля
+										Methods.CreateText(txtDist.ToString() + " м", new Point3d(txtPnt.X + 250, txtPnt.Y - 450, 0), 90);
+
+										//Участок линии 2
+										Methods.CreateLine(new Point3d(insPoint.X, insPoint.Y - 2300, 0), new Point3d(insPoint.X - 3200, insPoint.Y - 2300, 0), layer);
+
+									}
+								}
+
+								Methods.CreateText(brNameInSystem, new Point3d(insPoint.X + 350, insPoint.Y + 100, 0), 0);
+								Methods.CreateText(brRoom, new Point3d(insPoint.X + 350, insPoint.Y - 300, 0), 0);
+
+								Common.Block.InsertWithRotation(br.Name, insPoint);								
+
+
+								break;
+
+							case "EL":
+
+								if (lt.Has("!СС КаБель горизонтальный"))
+									layer = "!СС КаБель горизонтальный";
+								else
+									layer = "0";
+
+								// Смещения по Y для блоков
+								if (brNumberInSystem.Substring(0, 1) != "1")
+								{
+									dY = 7000 * Convert.ToInt32(brNumberInSystem.Substring(0, 1));
+								}
+
+								// Смещение по X для первого блока
+								if (brNumberInSystem.Substring(1, 1) == "1")
+								{
+									dX = 8000;
+								}
+								// Смещение по X для последеющих блоков
+								else
+								{
+									dX = 8000 * Convert.ToInt32(brNumberInSystem.Substring(1, 1));
+								}
+
+								if (brNumberInSystem.Substring(3, 1) == "3")
+									{
+									insPoint = new Point3d(baseX + dX - 3500, baseY + dY + 6000, 0);
+									Methods.CreateLine(new Point3d(insPoint.X, insPoint.Y, 0), new Point3d(insPoint.X, insPoint.Y - 2000, 0), layer);
+									// Находим центр линии 
+									txtPnt = Methods.CenterPointBetweenPoints(new Point3d(insPoint.X, insPoint.Y, 0), new Point3d(insPoint.X, insPoint.Y - 2000, 0));
+
+									// Вставляем текст с типом кабеля
+									Methods.CreateText(brCabelType, new Point3d(txtPnt.X - 100, txtPnt.Y - 450, 0), 90);
+
+									// Вставляем текст с длиной кабеля
+									Methods.CreateText(txtDist.ToString() + " м", new Point3d(txtPnt.X + 250, txtPnt.Y - 450, 0), 90);
+								}
+									else if (brNumberInSystem.Substring(3, 1) == "1")
+									{
+									insPoint = new Point3d(baseX + dX - 1200, baseY + dY + 6000, 0);
+									Methods.CreateLine(new Point3d(insPoint.X, insPoint.Y, 0), new Point3d(insPoint.X, insPoint.Y - 2000, 0), layer);
+									// Находим центр линии 
+									txtPnt = Methods.CenterPointBetweenPoints(new Point3d(insPoint.X, insPoint.Y, 0), new Point3d(insPoint.X, insPoint.Y - 2000, 0));
+
+									// Вставляем текст с типом кабеля
+									Methods.CreateText(brCabelType, new Point3d(txtPnt.X - 100, txtPnt.Y - 450, 0), 90);
+
+									// Вставляем текст с длиной кабеля
+									Methods.CreateText(txtDist.ToString() + " м", new Point3d(txtPnt.X + 250, txtPnt.Y - 450, 0), 90);
+								}
+									else if (brNumberInSystem.Substring(3, 1) == "2")
+									{
+									insPoint = new Point3d(baseX + dX + 1200, baseY + dY + 6000, 0);
+									Methods.CreateLine(new Point3d(insPoint.X, insPoint.Y, 0), new Point3d(insPoint.X, insPoint.Y - 2000, 0), layer);
+									// Находим центр линии 
+									txtPnt = Methods.CenterPointBetweenPoints(new Point3d(insPoint.X, insPoint.Y, 0), new Point3d(insPoint.X, insPoint.Y - 2000, 0));
+
+									// Вставляем текст с типом кабеля
+									Methods.CreateText(brCabelType, new Point3d(txtPnt.X - 100, txtPnt.Y - 450, 0), 90);
+
+									// Вставляем текст с длиной кабеля
+									Methods.CreateText(txtDist.ToString() + " м", new Point3d(txtPnt.X + 250, txtPnt.Y - 450, 0), 90);
+								}
+									else if (brNumberInSystem.Substring(3, 1) == "4")
+									{
+									insPoint = new Point3d(baseX + dX + 3500, baseY + dY + 6000, 0);
+									Methods.CreateLine(new Point3d(insPoint.X, insPoint.Y, 0), new Point3d(insPoint.X, insPoint.Y - 2000, 0), layer);
+									// Находим центр линии 
+									txtPnt = Methods.CenterPointBetweenPoints(new Point3d(insPoint.X, insPoint.Y, 0), new Point3d(insPoint.X, insPoint.Y - 2000, 0));
+
+									// Вставляем текст с типом кабеля
+									Methods.CreateText(brCabelType, new Point3d(txtPnt.X - 100, txtPnt.Y - 450, 0), 90);
+
+									// Вставляем текст с длиной кабеля
+									Methods.CreateText(txtDist.ToString() + " м", new Point3d(txtPnt.X + 250, txtPnt.Y - 450, 0), 90);
+								}
+
+								Methods.CreateText(brNameInSystem, new Point3d(insPoint.X + 350, insPoint.Y + 100, 0), 0);
+								Methods.CreateText(brRoom, new Point3d(insPoint.X + 350, insPoint.Y - 300, 0), 0);
+
+								Common.Block.InsertWithRotation(br.Name, insPoint);
+
+								break;
+
+							// выход
 							default:
 								break;
 						}
+
+						// Записываем атрибуты в вставленный блок
+
+				
 
 					}
 					tr.Commit();
 				}
 
-				catch(Exception ex)
+				catch (Exception ex)
 				{
 					ed.WriteMessage("\nИсключение в методе AV03_Scheme " + ex.Message + "\n В строке: " + ex.StackTrace);
 
@@ -163,47 +679,12 @@ namespace Neelov.AutocadPlugin
 				{
 					tr.Dispose();
 				}
-				
+
 
 			}
 
 
 		}
-
-		/// <summary>
-		/// Получаем точку вставки блока 1 уровня (NAP)
-		/// </summary>
-		/// <returns></returns>
-		private static Point3d GetLevel1Point()
-		{
-			Point3d result = new Point3d();
-			
-			return result;
-		}
-
-
-		private static Point3d PointPDBlock(string number, Point3d pnt)
-		{
-			Point3d result = new Point3d();
-
-			double x = pnt.X;
-			double y = pnt.Y;
-			double z = pnt.Z;
-
-
-			foreach (char ch in number)
-			{
-				x = x + 10000 * ch;
-				y = y + 8000 * ch;
-				
-			}
-
-			return result = new Point3d(x, y, z);
-
-		}
-
-
-
-
+		
 	}
 }

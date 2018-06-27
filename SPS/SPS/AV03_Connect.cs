@@ -355,7 +355,7 @@ namespace Neelov.AutocadPlugin
 				sCabelType = "B";
 			}
 
-			else if (fName == "KO" || fName == "SJ")
+			else if (fName == "PD" || fName == "SJ")
 			{
 				sCabelType = "A+B";
 			}

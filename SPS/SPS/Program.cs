@@ -19,7 +19,7 @@ namespace Neelov.AutocadPlugin
 		/// <summary>
 		/// Комманда для вставки оборудования на планы
 		/// </summary>
-		[CommandMethod("NK-INSERTEQVIPMENT")]
+		[CommandMethod("INSERTEQVIPMENT")]
 		public void InsertEqvipment()
 		{
 			Insert.InsertEqvipment();	
@@ -37,7 +37,7 @@ namespace Neelov.AutocadPlugin
 		/// <summary>
 		/// Комманда для подключения оборудования 
 		/// </summary>
-		[CommandMethod("NK-AV03-CONNECT")]
+		[CommandMethod("AV03-CONNECT")]
 		public void Connect()
 		{
 			AV03_Connect.Connect();
@@ -54,7 +54,7 @@ namespace Neelov.AutocadPlugin
 		//}		
 
 
-		[CommandMethod("NK-AV03-STRUCTURALSCHEME")]
+		[CommandMethod("AV03-STRUCTURALSCHEME")]
 			public void StructialScheme()
 		{
 			AV03_DrawScheme.AV03_Scheme();
