@@ -12,7 +12,7 @@ namespace Neelov.AutocadPlugin
 	/// <summary>
 	/// Класс реализующий подключени оборудования
 	/// </summary>
-	class ConnectSPS
+	class V03IP_Connect
 	{
 		// 111
 		public static void Connect()
@@ -177,10 +177,22 @@ namespace Neelov.AutocadPlugin
 				}
 			}
 
+			//Производим общие вычисления
+			// расстояние между блоками с учетом опуска + запас 20%
+			double opuski;
+			if (sHeight == "Стол" || sHeight == "Шкаф")
+				opuski = Convert.ToDouble(fHeight);
+			else if (fHeight == "Стол" || fHeight == "Шкаф")
+				opuski = Convert.ToDouble(sHeight);
+			else if (fHeight == sHeight)
+				opuski = 0;
+			else
+				opuski = Convert.ToDouble(fHeight) + Convert.ToDouble(sHeight);
+
 
 			//Производим общие вычисления
 			// расстояние между блоками с учетом 6 м запаса на опуски + 10%
-			double distanceToBlock = Math.Round((Methods.DictanceBetweenBlocks(pFirstBlock, pSecondBlock) + 6000) / 1000 * 1.2);
+			double distanceToBlock = Math.Round(((Methods.DictanceBetweenBlocks(pFirstBlock, pSecondBlock) / 1000) + opuski) * 1.2);
 
 			// Вычисления для блока 1
 			// Выполняем подключение магистрального оборудования
@@ -315,6 +327,15 @@ namespace Neelov.AutocadPlugin
 			else if (fName == "KJ" || fName == "KJD" || fName == "SIJ" || fName == "TNV" || fName == "TANV" || fName == "TANVT")
 			{
 				sCabelType = "C";
+			}
+
+			else if (fName == "N250")
+			{
+				sCabelType = "B";
+			}
+			else if (fName == "ZE" || fName == "ZU")
+			{
+				sCabelType	= "Комп."
 			}
 			else
 			{
