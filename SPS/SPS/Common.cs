@@ -351,7 +351,7 @@ namespace Neelov.AutocadPlugin
 		}
 		
 		/// <summary>
-		/// Метод для вычисления поворота текста в радианах
+		/// Метод для вычисления поворота текста в градусах
 		/// </summary>
 		/// <param name="moveSide">Направление смещения блока</param>
 		/// <returns></returns>
@@ -364,7 +364,7 @@ namespace Neelov.AutocadPlugin
 			else if (moveSide == "2")
 				result = 270;
 
-			return ConvertDegToRad(result);
+			return result;
 		}
 		
 		static public double ConvertDegToRad(double deg)
@@ -379,7 +379,7 @@ namespace Neelov.AutocadPlugin
 
 		static public double DictanceBetweenBlocks(Point3d pnt1, Point3d pnt2)
 		{
-			return Math.Sqrt(Math.Pow(pnt2.X - pnt1.X, 2) + Math.Pow(pnt2.Y - pnt2.Y, 2));
+			return Math.Sqrt(Math.Pow(pnt2.X - pnt1.X, 2) + Math.Pow(pnt2.Y - pnt1.Y, 2));
 		}
 
 		/// <summary>

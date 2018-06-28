@@ -147,7 +147,28 @@ namespace Neelov.AutocadPlugin
 			// Выбираем второй блок			
 			PromptSelectionOptions psoSecondBlock = new PromptSelectionOptions();
 
-			psoSecondBlock.MessageForAdding = ("\nВыберите оборудование которое подключаем: ");
+			string strEq = "";
+
+			if (fName == "NAP")
+			{
+				strEq = "\nМожно подключить: " + "\nВ магистальную линию: PD";
+			}
+			else if (fName == "PD")
+			{
+				strEq = "\nМожно подключить: " + "\nВ магистальную линию: PD" + "\nВ абонентскую линию: SJ, SVO, ZVJ, ZRJ";
+			}
+			else if (fName == "ZVJ")
+				strEq = "\nМожно подключить: " + "\nВ абонентскую линию: VJ";
+			else if (fName == "SJ")
+				strEq = "\nМожно подключить: " + "\nВ абонентскую линию: TEZ";
+			else if (fName == "TEZ")
+				strEq = "\nМожно подключить: " + "\nВ абонентскую линию: EL";
+			else if (fName == "ZRJ")
+				strEq = "\nМожно подключить: " + "\nВ абонентскую линию: RJ, RJP";
+
+
+
+			psoSecondBlock.MessageForAdding = ("\nВыберите оборудование которое подключаем: " + strEq);
 			PromptSelectionResult psrSecondBlock = ed.GetSelection(psoSecondBlock);
 
 			if (psrSecondBlock.Status != PromptStatus.OK) { return; }
@@ -210,11 +231,14 @@ namespace Neelov.AutocadPlugin
 				opuski = Convert.ToDouble(fHeight);
 			else if (fHeight == "Стол" || fHeight == "Шкаф")
 				opuski = Convert.ToDouble(sHeight);
+			else if (fHeight == sHeight)
+				opuski = 0;
 			else
 				opuski = Convert.ToDouble(fHeight) + Convert.ToDouble(sHeight);
 
+
 			
-			double distanceToBlock = Math.Round((Methods.DictanceBetweenBlocks(pFirstBlock, pSecondBlock)) + opuski / 1000 * 1.2);
+			double distanceToBlock =Math.Round(((Methods.DictanceBetweenBlocks(pFirstBlock, pSecondBlock) / 1000) + opuski) * 1.2);
 
 			// Вычисления для блока 1
 			// Выполняем подключение магистрального оборудования
@@ -360,7 +384,7 @@ namespace Neelov.AutocadPlugin
 				sCabelType = "A+B";
 			}
 
-			else if (fName == "ZVJ" || fName == "ZRJ" || fName == "SVO")
+			else if (fName == "ZRJ" || fName == "SVO")
 			{
 				sCabelType = "A";
 			}
@@ -370,9 +394,9 @@ namespace Neelov.AutocadPlugin
 				sCabelType = "C";
 			}
 
-			else if (fName == "VJ")
+			else if (fName == "ZVJ")
 			{
-				sCabelType = "Комплектный";
+				sCabelType = "Комп.";
 			}
 
 			else

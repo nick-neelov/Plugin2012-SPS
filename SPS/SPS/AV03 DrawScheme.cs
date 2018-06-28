@@ -44,10 +44,7 @@ namespace Neelov.AutocadPlugin
 				new TypedValue((int)DxfCode.Start, "INSERT")
 			};
 			SelectionFilter filter = new SelectionFilter(typeBlock);
-
-
-
-
+			
 			//Выбираем блоки рамкой
 			// Первая точка рамки
 			PromptPointResult firstPointCW = ed.GetPoint("\nУкажите первую точку рамки для выбора: ");
@@ -111,9 +108,9 @@ namespace Neelov.AutocadPlugin
 
 						string txtDist;
 						if (brDistanceTo != "")
-							txtDist = Math.Round(Convert.ToDouble(brDistanceTo) / 1000, 1, MidpointRounding.ToEven).ToString();
+							txtDist = brDistanceTo;
 						else
-							txtDist = "Шнур";
+							txtDist = "";
 
 						switch (brName)
 						{
@@ -177,8 +174,8 @@ namespace Neelov.AutocadPlugin
 								// Вставляем текст с длиной кабеля
 								Methods.CreateText(txtDist.ToString() + " м", new Point3d(txtPnt.X, txtPnt.Y - 250, 0), 0);
 
-								Methods.CreateText(brNameInSystem, new Point3d(insPoint.X - 100, insPoint.Y - 1200, 0), 90);
-								Methods.CreateText(brRoom, new Point3d(insPoint.X + 300, insPoint.Y - 700, 0), 90);
+								Methods.CreateText(brNameInSystem, new Point3d(insPoint.X - 300, insPoint.Y - 550, 0), 0);
+								Methods.CreateText(brRoom, new Point3d(insPoint.X - 300, insPoint.Y - 800, 0), 0);
 
 								// Вставляем блок коробки								
 								Common.Block.InsertWithRotation("PD", insPoint);
@@ -643,10 +640,10 @@ namespace Neelov.AutocadPlugin
 									txtPnt = Methods.CenterPointBetweenPoints(new Point3d(insPoint.X, insPoint.Y, 0), new Point3d(insPoint.X, insPoint.Y - 2000, 0));
 
 									// Вставляем текст с типом кабеля
-									Methods.CreateText(brCabelType, new Point3d(txtPnt.X - 100, txtPnt.Y - 450, 0), 90);
+									Methods.CreateText(brCabelType, new Point3d(txtPnt.X - 100, txtPnt.Y - 250, 0), 90);
 
 									// Вставляем текст с длиной кабеля
-									Methods.CreateText(txtDist.ToString() + " м", new Point3d(txtPnt.X + 250, txtPnt.Y - 450, 0), 90);
+									Methods.CreateText(txtDist.ToString() + " м", new Point3d(txtPnt.X + 250, txtPnt.Y - 250, 0), 90);
 								}
 
 								Methods.CreateText(brNameInSystem, new Point3d(insPoint.X + 350, insPoint.Y + 100, 0), 0);
@@ -662,10 +659,30 @@ namespace Neelov.AutocadPlugin
 						}
 
 						// Записываем атрибуты в вставленный блок
+						PromptSelectionResult psr = ed.SelectLast();
+						SelectionSet ssLast = psr.Value;
 
-				
+						foreach (SelectedObject s in ssLast)
+						{
+							BlockReference newBR = tr.GetObject(s.ObjectId, OpenMode.ForWrite) as BlockReference;
 
+							//Записываем атрибуты
+							Common.Attributes.SetAttribute(newBR, "1", brRoom);
+							Common.Attributes.SetAttribute(newBR, "2", brMove);
+							Common.Attributes.SetAttribute(newBR, "3", brRotate);
+							Common.Attributes.SetAttribute(newBR, "6", brName);
+							Common.Attributes.SetAttribute(newBR, "7", brMagistralFreeInputs);
+							Common.Attributes.SetAttribute(newBR, "8", brAbonentFreeInputs);
+							Common.Attributes.SetAttribute(newBR, "10", brHeight);
+							Common.Attributes.SetAttribute(newBR, "11", brNumberInSystem);
+							Common.Attributes.SetAttribute(newBR, "12", brNameInSystem);
+							Common.Attributes.SetAttribute(newBR, "13", brNumberPrevEqvipment);
+							Common.Attributes.SetAttribute(newBR, "14", brPrevRoom);
+							Common.Attributes.SetAttribute(newBR, "15", brDistanceTo);
+							Common.Attributes.SetAttribute(newBR, "16", brCabelType);
+						}
 					}
+
 					tr.Commit();
 				}
 
