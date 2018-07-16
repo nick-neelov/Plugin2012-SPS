@@ -25,14 +25,14 @@ namespace Neelov.AutocadPlugin
 			Insert.InsertEqvipment();	
 		}
 
-		///// <summary>
-		///// Комманда для подключения оборудования 
-		///// </summary>
-		//[CommandMethod("NK-SPS-CONNECT")]
-		//public void SPSConnect()
-		//{
-		//	ConnectSPS.Connect();
-		//}
+		/// <summary>
+		/// Комманда для подключения оборудования 
+		/// </summary>
+		[CommandMethod("V03IP-CONNECT")]
+		public void SPSConnect()
+		{
+			V03IP_Connect.Connect();
+		}
 
 		/// <summary>
 		/// Комманда для подключения оборудования 
@@ -47,11 +47,11 @@ namespace Neelov.AutocadPlugin
 		///// <summary>
 		///// Метод для отрисовки структурной схемы схемы
 		///// </summary>
-		//[CommandMethod("NK-SPS-DRAWSTRUCTURALSCHEME")]
-		//public void DrawStructuralScheme()
-		//{
-		//	DrawingOfThePersonnelCallSystemZPT.DrawStructuralSchemeZPT();
-		//}		
+		[CommandMethod("V03IP-STRUCTURALSCHEME")]
+		public void DrawStructuralScheme()
+		{
+			V03IP_DrawScheme.V03IP_Scheme();
+		}
 
 
 		[CommandMethod("AV03-STRUCTURALSCHEME")]

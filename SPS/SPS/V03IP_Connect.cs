@@ -125,10 +125,29 @@ namespace Neelov.AutocadPlugin
 			}
 
 
+			string strEq = "";
+
+			if (fName == "RT")
+			{
+				strEq = "\nМожно подключить: SM, SVV";
+			}
+			else if (fName == "SM")
+			{
+				strEq = "\nМожно подключить: SM, KJD, KJ, SJD, ZU, ZE";
+			}
+			else if (fName == "KJ" || fName == "KJD" || fName == "SIJ")
+				strEq = "\nМожно подключить: SV, TNV, TANV";
+			else if (fName == "SV" || fName == "TNV" || fName == "TANV")
+				strEq = "\nМожно подключить: SV, TNV, TANV";
+			else if (fName == "ZE")
+				strEq = "\nМожно подключить: TP, TPS";
+			else if (fName == "ZU")
+				strEq = "\nМожно подключить: LJ";
+
 			// Выбираем второй блок			
 			PromptSelectionOptions psoSecondBlock = new PromptSelectionOptions();
 
-			psoSecondBlock.MessageForAdding = "\nВыберите оборудование которое подключаем: ";
+			psoSecondBlock.MessageForAdding = "\nВыберите оборудование, для подключения: " + strEq;
 			PromptSelectionResult psrSecondBlock = ed.GetSelection(psoSecondBlock);
 
 			if (psrSecondBlock.Status != PromptStatus.OK) { return; }
@@ -270,7 +289,7 @@ namespace Neelov.AutocadPlugin
 						}
 					}
 
-					else if (fName == "KJ" || fName == "KJD" || fName == "SIJ")
+					else if (fName == "KJ" || fName == "KJD" || fName == "SIJ" || fName == "ZE" || fName == "ZU")
 					{
 						// Добавляем номер в системе во второй блок
 						sNumberInSystem = fNumberInSystem + "1";
@@ -320,11 +339,15 @@ namespace Neelov.AutocadPlugin
 			{
 				sCabelType = "A";
 			}
-			else if (fName == "SM")
+			else if (fName == "SM" && sName == "SM")
 			{
 				sCabelType = "A+B";
 			}
-			else if (fName == "KJ" || fName == "KJD" || fName == "SIJ" || fName == "TNV" || fName == "TANV" || fName == "TANVT")
+			else if (fName == "SM")
+			{
+				sCabelType = "A";
+			}
+			else if (fName == "KJ" || fName == "KJD" || fName == "SIJ" || fName == "TNV" || fName == "TANV" || fName == "TANVT" || fName ==  "SV")
 			{
 				sCabelType = "C";
 			}
@@ -335,7 +358,7 @@ namespace Neelov.AutocadPlugin
 			}
 			else if (fName == "ZE" || fName == "ZU")
 			{
-				sCabelType	= "Комп."
+				sCabelType = "Комп.";
 			}
 			else
 			{
@@ -399,63 +422,13 @@ namespace Neelov.AutocadPlugin
 							Point3d text2Point = Methods.NextTextPosition(sMove, text1Point);
 							double textAngle = Methods.TextRotation(sMove);
 
-							
-
-
-							////Определяем куда вставлять текст			
-							//object[] insData = new object[2];
-							//insData =  Methods.GetPointToInsert(brSecondBlock, sNameInSystem);
-							////Точка вставки
-							//Point3d pntText = new Point3d();
-							//pntText = (Point3d)insData[0];
-							//// Позиция для вставки
-							//int numPosition = (int)insData[1];
-
-							//// Положение 1
-							//if (numPosition == 0)
-							//{
-							//	dY2 = -250;
-							//	angleText = Methods.ConvertDegToRad(0.0);
-							//	pntText = new Point3d(pntText.X, pntText.Y, pntText.Z);
-							//}
-
-							////// Положение 2
-							//if (numPosition == 1)
-							//{
-							//	dX1 = -150;
-							//	dX2 = 150;
-							//	angleText = Methods.ConvertDegToRad(270.0);
-								
-							//}
-
-							//// Положение 3
-							//if (numPosition == 2)
-							//{
-							//	dY2 = -250;
-							//	angleText = Methods.ConvertDegToRad(0.0);
-							//}
-
-							//// Положение 4
-							//if (numPosition == 3)
-							//{
-							//	dX2 = 250;
-							//	angleText = Methods.ConvertDegToRad(90.0);
-							//}
-
-							//pntText = new Point3d(pntText.X + dX1, pntText.Y + dY1, pntText.Z);
-
-
+		
 
 							// Вставляем текст с обозначением блока
 							Methods.CreateText(sNameInSystem, text1Point, textAngle);
 
 							// Вставляем текст с высотой установки
 							Methods.CreateText("h = " + sHeight + " м", text2Point, textAngle);
-
-
-
-
-
 
 
 							// Устанавливаем слой после подключения

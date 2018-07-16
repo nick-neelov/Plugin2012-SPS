@@ -237,8 +237,8 @@ namespace Neelov.AutocadPlugin
 				opuski = Convert.ToDouble(fHeight) + Convert.ToDouble(sHeight);
 
 
-			
-			double distanceToBlock =Math.Round(((Methods.DictanceBetweenBlocks(pFirstBlock, pSecondBlock) / 1000) + opuski) * 1.2);
+			double distanceToBlock = Math.Round(((Methods.DictanceBetweenBlocks(pFirstBlock, pSecondBlock) / 1000) + opuski) * 1.2);
+			//	double distanceToBlock =Math.Round(((Methods.DictanceBetweenBlocks(pFirstBlock, pSecondBlock) / 1000) + opuski) * 1.2);
 
 			// Вычисления для блока 1
 			// Выполняем подключение магистрального оборудования
